@@ -10,7 +10,12 @@ add_library(
 )
 
 # Set the include directory.
-target_include_directories(Core PUBLIC ${RAPID_EDITOR_INCLUDE_DIR})
+target_include_directories(
+	Core 
+	PUBLIC 
+	
+	${RAPID_EDITOR_INCLUDE_DIR}
+)
 
 # Set the C++ standard as C++20.
 set_property(TARGET Core PROPERTY CXX_STANDARD 20)

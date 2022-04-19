@@ -31,7 +31,27 @@ namespace rapid
 		void terminate();
 
 	private:
+		/**
+		 * Initialize the instance.
+		 */
+		void createInstance();
+
+		/**
+		 * Select a suitable physical device.
+		 */
+		void selectPhysicalDevice();
+
+		/**
+		 * Create the logical device.
+		 */
+		void createLogicalDevice();
+
+	private:
+		VolkDeviceTable m_DeviceTable = {};
+
 		VkInstance m_Instance = VK_NULL_HANDLE;
+		VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+
 		VkDevice m_LogicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 

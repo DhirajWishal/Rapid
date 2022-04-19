@@ -8,7 +8,12 @@ add_executable(
 )
 
 # Set the include directory.
-target_include_directories(RapidEditor PUBLIC ${RAPID_EDITOR_INCLUDE_DIR})
+target_include_directories(
+	RapidEditor 
+	PUBLIC 
+	
+	${RAPID_EDITOR_INCLUDE_DIR}
+)
 
 # Add the target link libraries.
 target_link_libraries(RapidEditor Frontend)
