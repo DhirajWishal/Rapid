@@ -3,6 +3,8 @@
 # Add the test executable.
 add_executable(
 	RapidEditor
+
+	Main.cpp
 )
 
 # Set the include directory.

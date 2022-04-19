@@ -4,6 +4,8 @@
 add_library(
 	Backend
 	STATIC
+
+	Dummy.cpp
 )
 
 # Set the include directory.

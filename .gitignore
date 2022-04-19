@@ -351,3 +351,7 @@ MigrationBackup/
 
 # Don't include the .vscode folder.
 .vscode/
+
+
+# Make sure not to include the Visual Studio's output directory.
+out/

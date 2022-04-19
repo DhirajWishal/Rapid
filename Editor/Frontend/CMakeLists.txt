@@ -4,6 +4,8 @@
 add_library(
 	Frontend
 	STATIC
+
+	Dummy.cpp
 )
 
 # Set the include directory.
