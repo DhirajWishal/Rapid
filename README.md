@@ -1,2 +1,7 @@
 # Rapid
-Visual programming language for game engines.
+
+Visual code editor primarily built for game engines.
+
+## License
+
+This project is licensed under MIT.
