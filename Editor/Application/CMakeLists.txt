@@ -10,5 +10,8 @@ add_executable(
 # Set the include directory.
 target_include_directories(RapidEditor PUBLIC ${RAPID_EDITOR_INCLUDE_DIR})
 
+# Add the target link libraries.
+target_link_libraries(RapidEditor Frontend)
+
 # Set the C++ standard as C++20.
 set_property(TARGET RapidEditor PROPERTY CXX_STANDARD 20)

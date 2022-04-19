@@ -27,6 +27,9 @@ add_library(
 	${VOLK_INCLUDE_DIR}/volk.c
 )
 
+# Add the Vulkan include directory for the volk library.
+target_include_directories(volk PUBLIC ${VULKAN_INCLUDE_DIR})
+
 
 # Set the Vulkan memory allocator include directory.
 set(VMA_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/VulkanMemoryAllocator/include)
