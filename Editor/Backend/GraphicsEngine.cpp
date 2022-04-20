@@ -14,7 +14,7 @@ namespace
 	 * @param value The color value.
 	 * @return The created color value.
 	 */
-	consteval float CreateColor256(float value) { return value / 256; }
+	constexpr float CreateColor256(float value) { return value / 256; }
 }
 
 namespace rapid
