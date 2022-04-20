@@ -10,3 +10,6 @@
 [submodule "ThirdParty/SPIRV-Reflect"]
 	path = ThirdParty/SPIRV-Reflect
 	url = https://github.com/KhronosGroup/SPIRV-Reflect
+[submodule "ThirdParty/spdlog"]
+	path = ThirdParty/spdlog
+	url = https://github.com/gabime/spdlog
