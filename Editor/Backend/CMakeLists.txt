@@ -17,7 +17,6 @@ target_include_directories(
 	PUBLIC 
 
 	${RAPID_EDITOR_INCLUDE_DIR} 
-	${VULKAN_INCLUDE_DIR} 
 	${VOLK_INCLUDE_DIR} 
 	${VMA_INCLUDE_DIR}
 )
@@ -28,6 +27,7 @@ target_link_libraries(
 
 	Core 
 	volk
+	spdlog
 )
 
 # Set the C++ standard as C++20.

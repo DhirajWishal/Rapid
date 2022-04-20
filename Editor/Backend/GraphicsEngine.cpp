@@ -30,6 +30,14 @@ namespace rapid
 
 	void GraphicsEngine::createInstance()
 	{
+		VkApplicationInfo applicationInfo = {
+			.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+			.pNext = nullptr,
+			.pApplicationName = "Rapid",
+			.applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+			.engineVersion = VK_MAKE_VERSION(1, 0, 0),
+			.apiVersion = volkGetInstanceVersion()
+		};
 	}
 
 	void GraphicsEngine::selectPhysicalDevice()

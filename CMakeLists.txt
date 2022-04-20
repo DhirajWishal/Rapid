@@ -60,6 +60,7 @@ add_library(
 )
 
 target_include_directories(spdlog PUBLIC ${SPDLOG_INCLUDE_DIR})
+target_compile_definitions(spdlog PUBLIC SPDLOG_COMPILED_LIB)
 
 # Add the required subdirectories.
 add_subdirectory(Editor/Application)

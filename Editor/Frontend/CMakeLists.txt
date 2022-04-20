@@ -4,8 +4,13 @@
 add_library(
 	Frontend
 	STATIC
-
-	Dummy.cpp
+	
+	Function.cpp
+	Function.hpp
+	Object.hpp 
+	Defaults.hpp  
+	Object.cpp 
+	Variable.hpp
 )
 
 # Set the include directory.
