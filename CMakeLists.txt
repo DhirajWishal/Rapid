@@ -27,6 +27,8 @@ add_library(
         ${VOLK_INCLUDE_DIR}/volk.c
 )
 
+set_property(TARGET volk PROPERTY CXX_STANDARD 20)
+
 # Add the Vulkan include directory for the volk library.
 target_include_directories(volk PUBLIC ${VULKAN_INCLUDE_DIR})
 
@@ -42,6 +44,8 @@ add_library(
 
         ${SPIRV_REFLECT_INCLUDE_DIR}/spirv_reflect.cpp
 )
+
+set_property(TARGET SPIRV_Reflect PROPERTY CXX_STANDARD 20)
 
 # Set the spdlog library and add it as a target library.
 set(SPDLOG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/spdlog/include)
@@ -59,6 +63,8 @@ add_library(
         ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/spdlog/src/stdout_sinks.cpp
 )
 
+set_property(TARGET spdlog PROPERTY CXX_STANDARD 20)
+
 # Set the imgui library and add it as a target library.
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/imgui)
 
@@ -73,6 +79,7 @@ add_library(
         ${IMGUI_INCLUDE_DIR}/imgui_widgets.cpp
 )
 
+set_property(TARGET imgui PROPERTY CXX_STANDARD 20)
 target_include_directories(spdlog PUBLIC ${SPDLOG_INCLUDE_DIR})
 target_compile_definitions(spdlog PUBLIC SPDLOG_COMPILED_LIB)
 
