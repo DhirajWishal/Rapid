@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include <volk.h>
+#include "Window.hpp"
+
 #include <vk_mem_alloc.h>
 
 namespace rapid
@@ -66,8 +67,15 @@ namespace rapid
 	private:
 		VolkDeviceTable m_DeviceTable = {};
 
+		std::vector<Window> m_Windows = {};
+		std::vector<const char*> m_ValidationLayers = {};
+
 		VkInstance m_Instance = VK_NULL_HANDLE;
+
+#ifdef RAPID_DEBUG
 		VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+
+#endif
 
 		VkDevice m_LogicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;

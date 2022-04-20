@@ -9,7 +9,7 @@ add_library(
 	GraphicsEngine.hpp
 	Utility.cpp
 	Utility.hpp
-)
+ "Window.hpp" "Window.cpp")
 
 # Set the include directory.
 target_include_directories(
@@ -20,6 +20,7 @@ target_include_directories(
 	${VOLK_INCLUDE_DIR} 
 	${VMA_INCLUDE_DIR}
 	${IMGUI_INCLUDE_DIR}
+	${SDL_INCLUDE_DIR}
 )
 
 # Add the target link libraries.
@@ -30,6 +31,7 @@ target_link_libraries(
 	volk
 	spdlog
 	imgui
+	SDL2
 )
 
 # Set the C++ standard as C++20.

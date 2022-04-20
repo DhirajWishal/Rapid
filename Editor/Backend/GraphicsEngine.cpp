@@ -4,7 +4,11 @@
 #include "GraphicsEngine.hpp"
 #include "Utility.hpp"
 
+#include <SDL_vulkan.h>
 #include <imgui.h>
+#include <spdlog/spdlog.h>
+
+#include <fstream>
 
 namespace
 {
@@ -15,6 +19,105 @@ namespace
 	 * @return The created color value.
 	 */
 	constexpr float CreateColor256(float value) { return value / 256; }
+
+	/**
+	 * Get the required extension names.
+	 *
+	 * @return The extension names.
+	 */
+	std::vector<const char*> GetRequiredExtensions()
+	{
+		uint32_t extensionCount = 0;
+		rapid::utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr), "Failed to enumerate instance extension property count!");
+
+		std::vector<VkExtensionProperties> extensions(extensionCount);
+		rapid::utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()), "Failed to enumerate instance extension property count!");
+
+		std::vector<const char*> extensionNames;
+		extensionNames.reserve(extensionCount);
+
+		// We just need the extension names so we can put those to the vector.
+		for (const auto& extension : extensions)
+			extensionNames.emplace_back(extension.extensionName);
+
+		return extensionNames;
+	}
+
+#ifdef RAPID_DEBUG
+	/**
+	 * Vulkan debug callback.
+	 * This function will be called when a debug message is to be printed by the Vulkan framework.
+	 *
+	 * @param messageSeverity The severity of the message.
+	 * @param messageType The type of the message.
+	 * @param pCallbackData The callback data. This may contain valuable information regarding an error.
+	 * @param pUseData The user data that was provided at the time of the error.
+	 * @return A boolean value.
+	 */
+	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+		VkDebugUtilsMessageTypeFlagsEXT messageType,
+		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+		void* pUserData)
+	{
+		std::string myMessagePreStatement = ": ";
+		if (messageType & VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+			myMessagePreStatement += "GENERAL | ";
+		else if (messageType & VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+			myMessagePreStatement += "VALIDATION | ";
+		else if (messageType & VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+			myMessagePreStatement += "PERFORMANCE | ";
+
+		std::stringstream messageStream;
+		messageStream << "Vulkan Validation Layer " << myMessagePreStatement << pCallbackData->pMessage;
+
+		switch (messageSeverity)
+		{
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			spdlog::warn(messageStream.str());
+			break;
+
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+			spdlog::error(messageStream.str());
+			break;
+
+		default:
+			spdlog::info(messageStream.str());
+			break;
+		}
+
+		return VK_FALSE;
+	}
+
+	/**
+	 * Create the debug messenger create info.
+	 *
+	 * @return The create info structure.
+	 */
+	VkDebugUtilsMessengerCreateInfoEXT CreateDebugMessengerCreateInfo()
+	{
+		VkDebugUtilsMessengerCreateInfoEXT vCreateInfo = {};
+		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+		vCreateInfo.pNext = VK_NULL_HANDLE;
+		vCreateInfo.pUserData = VK_NULL_HANDLE;
+		vCreateInfo.flags = 0;
+		vCreateInfo.pfnUserCallback = DebugCallback;
+
+		vCreateInfo.messageSeverity
+			= VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+
+		vCreateInfo.messageType
+			= VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
+		return vCreateInfo;
+	}
+
+#endif
 }
 
 namespace rapid
@@ -23,6 +126,10 @@ namespace rapid
 	{
 		// FIrst of all, initialize volk. Without this we can't do anything else.
 		utility::ValidateResult(volkInitialize(), "Failed to initialize volk!");
+
+		// Initialize SDL and create the main window.
+		SDL_Init(SDL_INIT_VIDEO);
+		m_Windows.emplace_back(Window("Rapid Editor"));
 
 		// Initialize the instance and the rest.
 		createInstance();
@@ -42,6 +149,18 @@ namespace rapid
 	void GraphicsEngine::terminate()
 	{
 		ImGui::DestroyContext();
+
+		m_Windows.clear();
+		SDL_Quit();
+
+#ifdef RAPID_DEBUG
+		const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT"));
+		vkDestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
+
+#endif
+
+		vkDestroyInstance(m_Instance, nullptr);
+
 		m_IsTerminated = true;
 	}
 
@@ -80,7 +199,8 @@ namespace rapid
 
 	void GraphicsEngine::createInstance()
 	{
-		VkApplicationInfo applicationInfo = {
+		VkApplicationInfo applicationInfo =
+		{
 			.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
 			.pNext = nullptr,
 			.pApplicationName = "Rapid",
@@ -88,6 +208,51 @@ namespace rapid
 			.engineVersion = VK_MAKE_VERSION(1, 0, 0),
 			.apiVersion = volkGetInstanceVersion()
 		};
+
+		// Setup the extensions.
+		uint32_t extensionCount = 0;
+		rapid::utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr), "Failed to enumerate instance extension property count!");
+
+		std::vector<VkExtensionProperties> extensions(extensionCount);
+		rapid::utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()), "Failed to enumerate instance extension property count!");
+
+		std::vector<const char*> extensionNames;
+		extensionNames.reserve(extensionCount);
+
+		// We just need the extension names so we can put those to the vector.
+		for (const auto& extension : extensions)
+			extensionNames.emplace_back(extension.extensionName);
+
+		VkInstanceCreateInfo instanceCreateInfo =
+		{
+			.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.pApplicationInfo = &applicationInfo,
+			.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size()),
+			.ppEnabledLayerNames = m_ValidationLayers.data(),
+			.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size()),
+			.ppEnabledExtensionNames = extensionNames.data()
+		};
+
+#ifdef RAPID_DEBUG
+		m_ValidationLayers.emplace_back("VK_LAYER_KHRONOS_validation");
+		const auto debugMessengerCreateInfo = CreateDebugMessengerCreateInfo();
+
+		instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
+		instanceCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
+		instanceCreateInfo.pNext = &debugMessengerCreateInfo;
+
+#endif
+
+		// Create the instance.
+		utility::ValidateResult(vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance), "Failed to create the Vulkan instance!");
+
+#ifdef RAPID_DEBUG
+		const auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT"));
+		utility::ValidateResult(vkCreateDebugUtilsMessengerEXT(m_Instance, &debugMessengerCreateInfo, nullptr, &m_DebugMessenger), "Failed to create the debug messenger.");
+
+#endif
 	}
 
 	void GraphicsEngine::selectPhysicalDevice()
