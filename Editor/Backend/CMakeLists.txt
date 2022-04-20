@@ -19,6 +19,7 @@ target_include_directories(
 	${RAPID_EDITOR_INCLUDE_DIR} 
 	${VOLK_INCLUDE_DIR} 
 	${VMA_INCLUDE_DIR}
+	${IMGUI_INCLUDE_DIR}
 )
 
 # Add the target link libraries.
@@ -28,6 +29,7 @@ target_link_libraries(
 	Core 
 	volk
 	spdlog
+	imgui
 )
 
 # Set the C++ standard as C++20.

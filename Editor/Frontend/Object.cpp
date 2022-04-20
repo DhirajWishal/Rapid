@@ -4,6 +4,11 @@
 
 namespace rapid
 {
+	Object::Object(std::string&& name, object_type type)
+		: m_Name(name), m_Type(type) 
+	{
+	}
+
 	Object& Object::addMethod(Function&& function, AccessModifier modifier)
 	{
 		m_Functions.emplace_back(std::move(function), modifier);

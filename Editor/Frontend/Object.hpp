@@ -29,7 +29,7 @@ namespace rapid
 		 * @param name The name of the object.
 		 * @param type The object type.
 		 */
-		explicit Object(std::string&& name, object_type type) : m_Name(name), m_Type(type) {}
+		explicit Object(std::string&& name, object_type type);
 
 		/**
 		 * Add a new member function to the object.

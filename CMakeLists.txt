@@ -59,6 +59,20 @@ add_library(
         ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/spdlog/src/stdout_sinks.cpp
 )
 
+# Set the imgui library and add it as a target library.
+set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/imgui)
+
+add_library(
+        imgui
+        STATIC
+
+        ${IMGUI_INCLUDE_DIR}/imgui.cpp
+        ${IMGUI_INCLUDE_DIR}/imgui_demo.cpp
+        ${IMGUI_INCLUDE_DIR}/imgui_draw.cpp
+        ${IMGUI_INCLUDE_DIR}/imgui_tables.cpp
+        ${IMGUI_INCLUDE_DIR}/imgui_widgets.cpp
+)
+
 target_include_directories(spdlog PUBLIC ${SPDLOG_INCLUDE_DIR})
 target_compile_definitions(spdlog PUBLIC SPDLOG_COMPILED_LIB)
 
