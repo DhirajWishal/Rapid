@@ -30,6 +30,18 @@ namespace rapid
 		 */
 		void terminate();
 
+		/**
+		 * Begin frame function.
+		 * This function is required to be called as the first function before calling anything else.
+		 */
+		void beginFrame();
+
+		/**
+		 * End frame function.
+		 * This function must be called at the end to update all the internal components and render the scene.
+		 */
+		void endFrame();
+
 	private:
 		/**
 		 * Initialize the instance.
@@ -45,6 +57,11 @@ namespace rapid
 		 * Create the logical device.
 		 */
 		void createLogicalDevice();
+
+		/**
+		 * Setup ImGui.
+		 */
+		void setupImGui() const;
 
 	private:
 		VolkDeviceTable m_DeviceTable = {};
