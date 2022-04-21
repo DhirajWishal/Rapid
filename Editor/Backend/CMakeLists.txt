@@ -13,7 +13,12 @@ add_library(
 	Window.hpp
 	Queue.cpp
 	Queue.hpp
- "Buffer.hpp" "Buffer.cpp" "BackendObject.hpp")
+	Buffer.cpp
+	Buffer.hpp
+	BackendObject.hpp
+	Image.cpp
+	Image.hpp
+)
 
 # Set the include directory.
 target_include_directories(

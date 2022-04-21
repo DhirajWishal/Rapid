@@ -71,6 +71,13 @@ namespace rapid
 		const VolkDeviceTable& getDeviceTable() const { return m_DeviceTable; }
 
 		/**
+		 * Get the physical device properties.
+		 *
+		 * @return The physical device properties.
+		 */
+		const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const { return m_Properties; }
+
+		/**
 		 * Get the VMA allocator.
 		 *
 		 * @return The allocator.

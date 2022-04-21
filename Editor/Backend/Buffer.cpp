@@ -61,7 +61,7 @@ namespace rapid
 
 	Buffer::~Buffer()
 	{
-		if (!m_IsTerminated)
+		if (isActive())
 			terminate();
 	}
 

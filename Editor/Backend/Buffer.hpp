@@ -83,6 +83,13 @@ namespace rapid
 		 */
 		BufferType type() const { return m_Type; }
 
+		/**
+		 * Get the Vulkan buffer handle.
+		 *
+		 * @return The buffer.
+		 */
+		VkBuffer buffer() const { return m_Buffer; }
+
 	private:
 		GraphicsEngine& m_Engine;
 

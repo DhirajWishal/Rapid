@@ -17,7 +17,7 @@ namespace rapid
 
 	Window::~Window()
 	{
-		if (!m_IsTerminated)
+		if (isActive())
 			terminate();
 	}
 

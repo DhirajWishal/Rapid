@@ -26,6 +26,13 @@ namespace rapid
 		 */
 		virtual void terminate() = 0;
 
+		/**
+		 * Check if the object is active.
+		 *
+		 * @return Status.
+		 */
+		bool isActive() const { return !m_IsTerminated; }
+
 	protected:
 		bool m_IsTerminated = false;
 	};

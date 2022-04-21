@@ -190,7 +190,7 @@ namespace rapid
 
 	GraphicsEngine::~GraphicsEngine()
 	{
-		if (!m_IsTerminated)
+		if (isActive())
 			terminate();
 	}
 
@@ -521,9 +521,10 @@ namespace rapid
 		}
 
 		VkPhysicalDeviceFeatures features = {};
-		//features.samplerAnisotropy = VK_TRUE;
-		//features.sampleRateShading = VK_TRUE;
-		//features.tessellationShader = VK_TRUE;
+		features.samplerAnisotropy = VK_TRUE;
+		features.sampleRateShading = VK_TRUE;
+		features.tessellationShader = VK_TRUE;
+		features.geometryShader = VK_TRUE;
 
 		// Device create info.
 		VkDeviceCreateInfo deviceCreateInfo = {
