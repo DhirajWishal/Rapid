@@ -2,10 +2,12 @@
 
 #pragma once
 
-#include "GraphicsEngine.hpp"
+#include "CommandBuffer.hpp"
 
 namespace rapid
 {
+	class Window;
+
 	/**
 	 * Processing node.
 	 * Processing nodes are used to render a set of objects to the screen. In this application, we use nodes to render the UI.
@@ -17,17 +19,36 @@ namespace rapid
 		 * Explicit constructor.
 		 *
 		 * @param engine The engine to which the object is bound to.
+		 * @param window The window which owns the node.
 		 */
-		explicit ProcessingNode(GraphicsEngine& engine) : m_Engine(engine) {}
+		explicit ProcessingNode(GraphicsEngine& engine, Window& window) : m_Engine(engine), m_Window(window) {}
+
+		/**
+		 * Virtual destructor.
+		 */
+		virtual ~ProcessingNode() = default;
+
+		/**
+		 * This method will be called as soon as the new iteration starts.
+		 */
+		virtual void onPollEvents() = 0;
 
 		/**
 		 * Bind the resources to the command buffer.
 		 *
-		 * @param vCommandBuffer The command buffer to bind to.
+		 * @param commandBuffer The command buffer to bind to.
 		 */
-		virtual void bind(VkCommandBuffer vCommandBuffer) = 0;
+		virtual void bind(CommandBuffer commandBuffer) = 0;
 
 	protected:
 		GraphicsEngine& m_Engine;
+		Window& m_Window;
 	};
+
+	/**
+	 * Node type concept.
+	 * This will check if the type is a base class of the ProcessingNode object.
+	 */
+	template<class Type>
+	concept node_type = std::is_base_of_v<ProcessingNode, Type>;
 }

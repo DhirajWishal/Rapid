@@ -26,8 +26,16 @@ namespace rapid
 			return;
 		}
 
-		// Create the swapchain.
+		// Get the frame count.
+		m_FrameCount = getBestBufferCount();
+
+		// Create the swapchain and the rest of rendering components.
 		createSwapchain();
+		createRenderPass();
+		createFramebuffers();
+
+		// Create the command buffer allocator.
+		m_CommandBufferAllocator = std::make_unique<CommandBufferAllocator>(m_Engine, m_FrameCount);
 	}
 
 	Window::~Window()
@@ -38,9 +46,38 @@ namespace rapid
 
 	void Window::terminate()
 	{
+		m_ProcessingNodes.clear();
+
+		m_CommandBufferAllocator->terminate();
+		m_Engine.getDeviceTable().vkDestroyRenderPass(m_Engine.getLogicalDevice(), m_RenderPass, nullptr);
+
+		for (auto vFrameBuffer : m_Framebuffers)
+			m_Engine.getDeviceTable().vkDestroyFramebuffer(m_Engine.getLogicalDevice(), vFrameBuffer, nullptr);
+
 		clearSwapchain();
 		vkDestroySurfaceKHR(m_Engine.getInstance(), m_Surface, nullptr);
 		m_IsTerminated = true;
+	}
+
+	void Window::pollEvents()
+	{
+		SDL_Event sdlEvent = {};
+		const auto isAvailable = SDL_PollEvent(&sdlEvent);
+
+		for (auto& pNode : m_ProcessingNodes)
+			pNode->onPollEvents();
+	}
+
+	void Window::submitFrame()
+	{
+		auto vCommandBuffer = m_CommandBufferAllocator->getCommandBuffer(m_FrameIndex);
+
+		// Bind the render pass.
+
+		for (auto& pNode : m_ProcessingNodes)
+			pNode->bind(vCommandBuffer);
+
+		// End the render pass.
 	}
 
 	VkExtent2D Window::extent() const
@@ -177,8 +214,7 @@ namespace rapid
 
 		m_SwapchainFormat = surfaceFormat.format;
 
-		// Get the best image count and the extent.
-		const auto imageCount = getBestBufferCount();
+		// Get the extent.
 		const auto imageExtent = extent();
 
 		// Create the swap chain.
@@ -187,7 +223,7 @@ namespace rapid
 			.pNext = VK_NULL_HANDLE,
 			.flags = 0,
 			.surface = m_Surface,
-			.minImageCount = imageCount,
+			.minImageCount = m_FrameCount,
 			.imageFormat = m_SwapchainFormat,
 			.imageColorSpace = surfaceFormat.colorSpace,
 			.imageExtent = imageExtent,
@@ -232,5 +268,97 @@ namespace rapid
 
 		// Finally we can resolve the swapchain image views.
 		resolveImageViews();
+	}
+
+	void Window::createRenderPass()
+	{
+		// Crate attachment descriptions.
+		VkAttachmentDescription attachmentDescription = {
+			.flags = 0,
+			.format = m_SwapchainFormat,
+			.samples = VK_SAMPLE_COUNT_1_BIT,
+			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+		};
+
+		// Create the subpass dependencies.
+		std::array<VkSubpassDependency, 2> subpassDependencies;
+		subpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		subpassDependencies[0].dstSubpass = 0;
+		subpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		subpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		subpassDependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		subpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		subpassDependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		subpassDependencies[1].srcSubpass = 0;
+		subpassDependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+		subpassDependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		subpassDependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		subpassDependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		subpassDependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		subpassDependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		// Create the subpass description.
+		VkAttachmentReference colorAttachmentReference = {
+			.attachment = 0,
+			.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+		};
+
+		VkSubpassDescription subpassDescription = {
+			.flags = 0,
+			.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+			.inputAttachmentCount = 0,
+			.pInputAttachments = nullptr,
+			.colorAttachmentCount = 1,
+			.pColorAttachments = &colorAttachmentReference,
+			.pResolveAttachments = nullptr,
+			.pDepthStencilAttachment = nullptr,
+			.preserveAttachmentCount = 0,
+			.pPreserveAttachments = nullptr
+		};
+
+		// Create the render target.
+		VkRenderPassCreateInfo renderPassCreateInfo = {
+			.sType = VkStructureType::VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.attachmentCount = 1,
+			.pAttachments = &attachmentDescription,
+			.subpassCount = 1,
+			.pSubpasses = &subpassDescription,
+			.dependencyCount = 2,
+			.pDependencies = subpassDependencies.data(),
+		};
+
+		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateRenderPass(m_Engine.getLogicalDevice(), &renderPassCreateInfo, nullptr, &m_RenderPass), "Failed to create render pass!");
+	}
+
+	void Window::createFramebuffers()
+	{
+		const auto imageExtent = extent();
+
+		VkFramebufferCreateInfo frameBufferCreateInfo = {
+			.sType = VkStructureType::VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+			.pNext = VK_NULL_HANDLE,
+			.flags = 0,
+			.renderPass = m_RenderPass,
+			.attachmentCount = 1,
+			.width = imageExtent.width,
+			.height = imageExtent.height,
+			.layers = 1,
+		};
+
+		// Iterate and create the frame buffers.
+		m_Framebuffers.resize(m_FrameCount);
+		for (uint8_t i = 0; i < m_FrameCount; i++)
+		{
+			frameBufferCreateInfo.pAttachments = &m_SwapchainImageViews[i];
+			utility::ValidateResult(m_Engine.getDeviceTable().vkCreateFramebuffer(m_Engine.getLogicalDevice(), &frameBufferCreateInfo, nullptr, &m_Framebuffers[i]), "Failed to create the frame buffer!");
+		}
 	}
 }

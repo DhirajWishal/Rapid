@@ -18,8 +18,9 @@ namespace rapid
 		 * Explicit constructor.
 		 *
 		 * @param engine The engine object.
+		 * @param window The window which owns the node.
 		 */
-		explicit ImGuiNode(GraphicsEngine& engine);
+		explicit ImGuiNode(GraphicsEngine& engine, Window& window);
 
 		/**
 		 * Destructor.
@@ -32,11 +33,16 @@ namespace rapid
 		void terminate() override;
 
 		/**
+		 * Update ImGUI on the new iteration.
+		 */
+		void onPollEvents() override;
+
+		/**
 		 * Bind the resources to the command buffer.
 		 *
-		 * @param vCommandBuffer The command buffer to bind to.
+		 * @param commandBuffer The command buffer to bind to.
 		 */
-		void bind(VkCommandBuffer vCommandBuffer) override;
+		void bind(CommandBuffer commandBuffer) override;
 
 	private:
 		std::unique_ptr<Image> m_FontImage = nullptr;

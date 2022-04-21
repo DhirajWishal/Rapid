@@ -2,10 +2,14 @@
 
 #pragma once
 
-#include "Window.hpp"
+#include "BackendObject.hpp"
 #include "Queue.hpp"
 
 #include <vk_mem_alloc.h>
+#include <volk.h>
+#include <SDL.h>
+#include <string>
+#include <vector>
 #include <memory>
 
 namespace rapid
@@ -32,18 +36,6 @@ namespace rapid
 		 * Terminate the engine.
 		 */
 		void terminate() override;
-
-		/**
-		 * Begin frame function.
-		 * This function is required to be called as the first function before calling anything else.
-		 */
-		void beginFrame();
-
-		/**
-		 * End frame function.
-		 * This function must be called at the end to update all the internal components and render the scene.
-		 */
-		void endFrame();
 
 		/**
 		 * Begin utility command buffer recording.
@@ -137,11 +129,6 @@ namespace rapid
 		void createLogicalDevice();
 
 		/**
-		 * Setup ImGui.
-		 */
-		void setupImGui() const;
-
-		/**
 		 * Create the utility command buffer.
 		 */
 		void createUtilityCommandBuffer();
@@ -151,8 +138,6 @@ namespace rapid
 		VkPhysicalDeviceProperties m_Properties = {};
 
 		Queue m_Queue = {};
-
-		std::unique_ptr<Window> m_Window = nullptr;
 
 		std::vector<const char*> m_ValidationLayers = {};
 		std::vector<const char*> m_DeviceExtensions = {};
