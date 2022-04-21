@@ -72,6 +72,13 @@ namespace rapid
 		const VolkDeviceTable& getDeviceTable() const { return m_DeviceTable; }
 
 		/**
+		 * Get the physical device.
+		 *
+		 * @return The physical device.
+		 */
+		VkPhysicalDevice getPhysicalDevice() const { return m_PhysicalDevice; }
+
+		/**
 		 * Get the physical device properties.
 		 *
 		 * @return The physical device properties.
@@ -99,12 +106,12 @@ namespace rapid
 		 */
 		VkInstance getInstance() const { return m_Instance; }
 
-        /**
-         * Get the queue object.
-         *
-         * @return The queue object.
-         */
-        Queue getQueue() const { return m_Queue; }
+		/**
+		 * Get the queue object.
+		 *
+		 * @return The queue object.
+		 */
+		Queue getQueue() const { return m_Queue; }
 
 	private:
 		/**
@@ -148,6 +155,7 @@ namespace rapid
 		std::unique_ptr<Window> m_Window = nullptr;
 
 		std::vector<const char*> m_ValidationLayers = {};
+		std::vector<const char*> m_DeviceExtensions = {};
 
 		VmaAllocator m_vAllocator;
 

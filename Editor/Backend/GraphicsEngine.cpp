@@ -167,48 +167,45 @@ namespace
 		return CheckDeviceExtensionSupport(vPhysicalDevice, deviceExtensions) && queue.isComplete();
 	}
 
-    /**
-     * Static initializer class.
-     * This class is initialized as a static variable and contains the initialization functions required to be run
-     * only once.
-     */
-    struct StaticInitializer
-    {
-        /**
-         * Default constructor.
-         */
-        StaticInitializer()
-        {
-            // First, initialize volk. Without this we can't do anything else.
-            rapid::utility::ValidateResult(volkInitialize(), "Failed to initialize volk!");
+	/**
+	 * Static initializer class.
+	 * This class is initialized as a static variable and contains the initialization functions required to be run
+	 * only once.
+	 */
+	struct StaticInitializer
+	{
+		/**
+		 * Default constructor.
+		 */
+		StaticInitializer()
+		{
+			// First, initialize volk. Without this we can't do anything else.
+			rapid::utility::ValidateResult(volkInitialize(), "Failed to initialize volk!");
 
-            // Initialize SDL and create the main window.
-            SDL_Init(SDL_INIT_VIDEO);
+			// Initialize SDL and create the main window.
+			SDL_Init(SDL_INIT_VIDEO);
 
-            // Initialize the ImGui context.
-            ImGui::CreateContext();
-        }
+			// Initialize the ImGui context.
+			ImGui::CreateContext();
+		}
 
-        /**
-         * Default destructor.
-         */
-        ~StaticInitializer()
-        {
-            ImGui::DestroyContext();
-            SDL_Quit();
-        }
-    };
+		/**
+		 * Default destructor.
+		 */
+		~StaticInitializer()
+		{
+			ImGui::DestroyContext();
+			SDL_Quit();
+		}
+	};
 }
 
 namespace rapid
 {
 	GraphicsEngine::GraphicsEngine()
 	{
-        // Set up the static initializer.
-        static StaticInitializer initializer;
-
-        // Create the main window.
-		m_Window = std::make_unique<Window>(*this, "Rapid Editor");
+		// Set up the static initializer.
+		static StaticInitializer initializer;
 
 		// Initialize the instance and the rest.
 		createInstance();
@@ -218,6 +215,9 @@ namespace rapid
 
 		// Make sure to set up ImGui.
 		setupImGui();
+
+		// Create the main window.
+		m_Window = std::make_unique<Window>(*this, "Rapid Editor");
 	}
 
 	GraphicsEngine::~GraphicsEngine()
@@ -404,13 +404,13 @@ namespace rapid
 
 		// Load the instance functions.
 		volkLoadInstance(m_Instance);
-
-		// Create the surface.
-		m_Window->createSurface();
 	}
 
 	void GraphicsEngine::selectPhysicalDevice()
 	{
+		// Set up the device extensions.
+		m_DeviceExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
 		// Enumerate physical devices.
 		uint32_t deviceCount = 0;
 		utility::ValidateResult(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr), "Failed to enumerate physical devices.");
@@ -432,7 +432,7 @@ namespace rapid
 		for (const auto& vCandidateDevice : vCandidates)
 		{
 			// Check if the device is suitable for our use.
-			if (IsPhysicalDeviceSuitable(vCandidateDevice, {}))
+			if (IsPhysicalDeviceSuitable(vCandidateDevice, m_DeviceExtensions))
 			{
 				VkPhysicalDeviceProperties vPhysicalDeviceProperties = {};
 				vkGetPhysicalDeviceProperties(vCandidateDevice, &vPhysicalDeviceProperties);
@@ -567,8 +567,8 @@ namespace rapid
 			.pQueueCreateInfos = queueCreateInfos.data(),
 			.enabledLayerCount = 0,
 			.ppEnabledLayerNames = nullptr,
-			.enabledExtensionCount = 0,
-			.ppEnabledExtensionNames = nullptr,
+			.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size()),
+			.ppEnabledExtensionNames = m_DeviceExtensions.data(),
 			.pEnabledFeatures = &features
 		};
 

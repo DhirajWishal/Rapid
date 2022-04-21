@@ -39,14 +39,46 @@ namespace rapid
 		void terminate() override;
 
 		/**
-		 * Create the Vulkan surface.
+		 * Get the window extent.
+		 *
+		 * @return The extent.
 		 */
-		void createSurface();
+		VkExtent2D extent() const;
 
 	private:
+		/**
+		 * Get the best buffer count.
+		 *
+		 * @return The buffer count.
+		 */
+		uint32_t getBestBufferCount() const;
+
+		/**
+		 * Clear the swapchain.
+		 */
+		void clearSwapchain();
+
+		/**
+		 * Resolve the swapchain image views.
+		 */
+		void resolveImageViews();
+
+		/**
+		 * Create the swapchain.
+		 */
+		void createSwapchain();
+
+	private:
+		std::vector<VkImage> m_SwapchainImages = {};
+		std::vector<VkImageView> m_SwapchainImageViews = {};
+
 		GraphicsEngine& m_Engine;
 
 		SDL_Window* m_pWindow = nullptr;
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
+
+		VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
+
+		VkFormat m_SwapchainFormat = VK_FORMAT_UNDEFINED;
 	};
 }

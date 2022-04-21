@@ -20,9 +20,10 @@ add_library(
 	Image.hpp
 	ImGuiNode.cpp
 	ImGuiNode.hpp
- 	ProcessingNode.hpp
+	ProcessingNode.hpp
 	CommandBufferAllocator.cpp
 	CommandBufferAllocator.hpp
+	CommandBuffer.cpp
 	CommandBuffer.hpp
 )
 
