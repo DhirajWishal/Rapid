@@ -20,3 +20,6 @@ target_link_libraries(RapidEditor Frontend)
 
 # Set the C++ standard as C++20.
 set_property(TARGET RapidEditor PROPERTY CXX_STANDARD 20)
+
+# Copy the shaders to the build output's application directory.
+file(COPY Shaders DESTINATION ${CMAKE_BINARY_DIR}/Editor/Application)

@@ -25,6 +25,8 @@ add_library(
 	CommandBufferAllocator.hpp
 	CommandBuffer.cpp
 	CommandBuffer.hpp
+	ShaderCode.hpp
+	ShaderCode.cpp
 )
 
 # Set the include directory.
@@ -37,6 +39,7 @@ target_include_directories(
 	${VMA_INCLUDE_DIR}
 	${IMGUI_INCLUDE_DIR}
 	${SDL_INCLUDE_DIR}
+	${SPIRV_REFLECT_INCLUDE_DIR}
 )
 
 # Add the target link libraries.
@@ -48,6 +51,7 @@ target_link_libraries(
 	spdlog
 	imgui
 	SDL2
+	SPIRV_Reflect
 )
 
 # Set the C++ standard as C++20.
