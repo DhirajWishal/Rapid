@@ -30,7 +30,7 @@ add_library(
 set_property(TARGET volk PROPERTY CXX_STANDARD 20)
 
 if(NOT MSVC)
-	target_compile_options(volk PUBLIC "-ldl")
+	set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")
 endif()
 
 # Add the Vulkan include directory for the volk library.
