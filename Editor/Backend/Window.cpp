@@ -15,6 +15,17 @@ namespace rapid
 			spdlog::error("Failed to create the window!");
 	}
 
+	Window::~Window()
+	{
+		if (!m_IsTerminated)
+			terminate();
+	}
+
+	void Window::terminate()
+	{
+		m_IsTerminated = true;
+	}
+
 	void Window::createSurface(VkInstance vInstance)
 	{
 		SDL_Vulkan_CreateSurface(m_pWindow, vInstance, &m_Surface);

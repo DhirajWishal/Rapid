@@ -182,6 +182,7 @@ namespace rapid
 		createInstance();
 		selectPhysicalDevice();
 		createLogicalDevice();
+		createUtilityCommandBuffer();
 
 		// Make sure to set up ImGui.
 		setupImGui();
@@ -200,6 +201,10 @@ namespace rapid
 		m_Windows.clear();
 		SDL_Quit();
 
+		m_DeviceTable.vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &m_CommandBuffer);
+		m_DeviceTable.vkDestroyCommandPool(m_LogicalDevice, m_CommandPool, nullptr);
+
+		vmaDestroyAllocator(m_vAllocator);
 		vkDestroyDevice(m_LogicalDevice, nullptr);
 
 #ifdef RAPID_DEBUG
@@ -246,6 +251,71 @@ namespace rapid
 		ImGui::Render();
 	}
 
+	VkCommandBuffer GraphicsEngine::beginCommandBufferRecording()
+	{
+		// Skip if we're on the recording state.
+		if (m_IsRecording)
+			return m_CommandBuffer;
+
+		// Begin recording.
+		VkCommandBufferBeginInfo beginInfo = {
+			.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+			.pNext = nullptr,
+			.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+		};
+
+		utility::ValidateResult(m_DeviceTable.vkBeginCommandBuffer(m_CommandBuffer, &beginInfo), "Failed to begin command buffer recording!");
+
+		m_IsRecording = true;
+		return m_CommandBuffer;
+	}
+
+	void GraphicsEngine::endCommandBufferRecording()
+	{
+		// Skip if we weren't recording.
+		if (!m_IsRecording)
+			return;
+
+		utility::ValidateResult(m_DeviceTable.vkEndCommandBuffer(m_CommandBuffer), "Failed to end command buffer recording!");
+		m_IsRecording = false;
+	}
+
+	void GraphicsEngine::executeRecordedCommands(bool shouldWait)
+	{
+		// End recording if we haven't.
+		endCommandBufferRecording();
+
+		VkSubmitInfo submitInfo = {
+			.sType = VkStructureType::VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			.commandBufferCount = 1,
+			.pCommandBuffers = &m_CommandBuffer
+		};
+
+		VkFence fence = VK_NULL_HANDLE;
+
+		// Create the fence if we need to wait.
+		if (shouldWait)
+		{
+			VkFenceCreateInfo vFenceCreateInfo = {
+				.sType = VkStructureType::VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+				.pNext = VK_NULL_HANDLE,
+				.flags = 0
+			};
+
+			utility::ValidateResult(m_DeviceTable.vkCreateFence(getLogicalDevice(), &vFenceCreateInfo, nullptr, &fence), "Failed to create the synchronization fence!");
+		}
+
+		// Submit the queue.
+		utility::ValidateResult(m_DeviceTable.vkQueueSubmit(m_Queue.getTransferQueue(), 1, &submitInfo, fence), "Failed to submit the queue!");
+
+		// Destroy the fence if we created it.
+		if (shouldWait)
+		{
+			utility::ValidateResult(m_DeviceTable.vkWaitForFences(getLogicalDevice(), 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
+			m_DeviceTable.vkDestroyFence(getLogicalDevice(), fence, nullptr);
+		}
+	}
+
 	void GraphicsEngine::createInstance()
 	{
 		VkApplicationInfo applicationInfo =
@@ -260,10 +330,10 @@ namespace rapid
 
 		// Setup the extensions.
 		uint32_t extensionCount = 0;
-		rapid::utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr), "Failed to enumerate instance extension property count!");
+		utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr), "Failed to enumerate instance extension property count!");
 
 		std::vector<VkExtensionProperties> extensions(extensionCount);
-		rapid::utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()), "Failed to enumerate instance extension property count!");
+		utility::ValidateResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()), "Failed to enumerate instance extension property count!");
 
 		std::vector<const char*> extensionNames;
 		extensionNames.reserve(extensionCount);
@@ -390,6 +460,40 @@ namespace rapid
 		m_Queue = Queue(m_PhysicalDevice);
 	}
 
+	VmaVulkanFunctions GraphicsEngine::getVmaFunctions() const
+	{
+		VmaVulkanFunctions functions = {
+			.vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+			.vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+			.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
+			.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties,
+			.vkAllocateMemory = m_DeviceTable.vkAllocateMemory,
+			.vkFreeMemory = m_DeviceTable.vkFreeMemory,
+			.vkMapMemory = m_DeviceTable.vkMapMemory,
+			.vkUnmapMemory = m_DeviceTable.vkUnmapMemory,
+			.vkFlushMappedMemoryRanges = m_DeviceTable.vkFlushMappedMemoryRanges,
+			.vkInvalidateMappedMemoryRanges = m_DeviceTable.vkInvalidateMappedMemoryRanges,
+			.vkBindBufferMemory = m_DeviceTable.vkBindBufferMemory,
+			.vkBindImageMemory = m_DeviceTable.vkBindImageMemory,
+			.vkGetBufferMemoryRequirements = m_DeviceTable.vkGetBufferMemoryRequirements,
+			.vkGetImageMemoryRequirements = m_DeviceTable.vkGetImageMemoryRequirements,
+			.vkCreateBuffer = m_DeviceTable.vkCreateBuffer,
+			.vkDestroyBuffer = m_DeviceTable.vkDestroyBuffer,
+			.vkCreateImage = m_DeviceTable.vkCreateImage,
+			.vkDestroyImage = m_DeviceTable.vkDestroyImage,
+			.vkCmdCopyBuffer = m_DeviceTable.vkCmdCopyBuffer,
+			.vkGetBufferMemoryRequirements2KHR = m_DeviceTable.vkGetBufferMemoryRequirements2,
+			.vkGetImageMemoryRequirements2KHR = m_DeviceTable.vkGetImageMemoryRequirements2,
+			.vkBindBufferMemory2KHR = m_DeviceTable.vkBindBufferMemory2,
+			.vkBindImageMemory2KHR = m_DeviceTable.vkBindImageMemory2,
+			.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2,
+			.vkGetDeviceBufferMemoryRequirements = m_DeviceTable.vkGetDeviceBufferMemoryRequirements,
+			.vkGetDeviceImageMemoryRequirements = m_DeviceTable.vkGetDeviceImageMemoryRequirements
+		};
+
+		return functions;
+	}
+
 	void GraphicsEngine::createLogicalDevice()
 	{
 		// Setup device queues.
@@ -451,6 +555,19 @@ namespace rapid
 		// Get the queues.
 		vkGetDeviceQueue(m_LogicalDevice, m_Queue.getTransferFamily().value(), 0, &m_Queue.getTransferQueue());
 		vkGetDeviceQueue(m_LogicalDevice, m_Queue.getGraphicsFamily().value(), 0, &m_Queue.getGraphicsQueue());
+
+		// Create VMA allocator.
+		const auto functions = getVmaFunctions();
+		VmaAllocatorCreateInfo vmaCreateInfo = {
+			.flags = 0,
+			.physicalDevice = m_PhysicalDevice,
+			.device = m_LogicalDevice,
+			.pVulkanFunctions = &functions,
+			.instance = m_Instance,
+			.vulkanApiVersion = volkGetInstanceVersion()
+		};
+
+		utility::ValidateResult(vmaCreateAllocator(&vmaCreateInfo, &m_vAllocator), "Failed to create the allocator!");
 	}
 
 	void GraphicsEngine::setupImGui() const
@@ -500,5 +617,29 @@ namespace rapid
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+	}
+
+	void GraphicsEngine::createUtilityCommandBuffer()
+	{
+		// Create the command pool.
+		VkCommandPoolCreateInfo commandPoolCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+			.pNext = VK_NULL_HANDLE,
+			.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+			.queueFamilyIndex = m_Queue.getTransferFamily().value()
+		};
+
+		utility::ValidateResult(m_DeviceTable.vkCreateCommandPool(m_LogicalDevice, &commandPoolCreateInfo, nullptr, &m_CommandPool), "Failed to create the command pool!");
+
+		// Allocate the command buffer.
+		VkCommandBufferAllocateInfo allocateInfo = {
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.pNext = VK_NULL_HANDLE,
+			.commandPool = m_CommandPool,
+			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.commandBufferCount = 1,
+		};
+
+		utility::ValidateResult(m_DeviceTable.vkAllocateCommandBuffers(m_LogicalDevice, &allocateInfo, &m_CommandBuffer), "Failed to allocate command buffer!");
 	}
 }

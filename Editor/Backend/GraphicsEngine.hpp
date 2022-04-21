@@ -13,7 +13,7 @@ namespace rapid
 	 * Graphics engine object.
 	 * This object contains the main graphics objects, namely the instance, logical and physical devices.
 	 */
-	class GraphicsEngine final
+	class GraphicsEngine final : public BackendObject
 	{
 	public:
 		/**
@@ -30,7 +30,7 @@ namespace rapid
 		/**
 		 * Terminate the engine.
 		 */
-		void terminate();
+		void terminate() override;
 
 		/**
 		 * Begin frame function.
@@ -44,6 +44,46 @@ namespace rapid
 		 */
 		void endFrame();
 
+		/**
+		 * Begin utility command buffer recording.
+		 *
+		 * @return The command buffer.
+		 */
+		VkCommandBuffer beginCommandBufferRecording();
+
+		/**
+		 * End the utility command buffer recording.
+		 */
+		void endCommandBufferRecording();
+
+		/**
+		 * Execute the recorded commands.
+		 *
+		 * @param shouldWait Whether or not to wait until the command are executed. Default is true.
+		 */
+		void executeRecordedCommands(bool shouldWait = true);
+
+		/**
+		 * Get the device table.
+		 *
+		 * @return The device table.
+		 */
+		const VolkDeviceTable& getDeviceTable() const { return m_DeviceTable; }
+
+		/**
+		 * Get the VMA allocator.
+		 *
+		 * @return The allocator.
+		 */
+		VmaAllocator getAllocator() const { return m_vAllocator; }
+
+		/**
+		 * Get the logical device.
+		 *
+		 * @return The logical device.
+		 */
+		VkDevice getLogicalDevice() const { return m_LogicalDevice; }
+
 	private:
 		/**
 		 * Initialize the instance.
@@ -56,6 +96,13 @@ namespace rapid
 		void selectPhysicalDevice();
 
 		/**
+		 * Get the VMA functions.
+		 *
+		 * @return The functions needed by VMA.
+		 */
+		VmaVulkanFunctions getVmaFunctions() const;
+
+		/**
 		 * Create the logical device.
 		 */
 		void createLogicalDevice();
@@ -65,6 +112,11 @@ namespace rapid
 		 */
 		void setupImGui() const;
 
+		/**
+		 * Create the utility command buffer.
+		 */
+		void createUtilityCommandBuffer();
+
 	private:
 		VolkDeviceTable m_DeviceTable = {};
 		VkPhysicalDeviceProperties m_Properties = {};
@@ -73,6 +125,8 @@ namespace rapid
 
 		std::vector<Window> m_Windows = {};
 		std::vector<const char*> m_ValidationLayers = {};
+
+		VmaAllocator m_vAllocator;
 
 		VkInstance m_Instance = VK_NULL_HANDLE;
 
@@ -84,6 +138,9 @@ namespace rapid
 		VkDevice m_LogicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 
-		bool m_IsTerminated = false;
+		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+		VkCommandBuffer m_CommandBuffer = VK_NULL_HANDLE;
+
+		bool m_IsRecording = false;
 	};
 }
