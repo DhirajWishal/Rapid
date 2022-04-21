@@ -3,6 +3,7 @@
 #define VMA_IMPLEMENTATION
 #include "GraphicsEngine.hpp"
 #include "Utility.hpp"
+#include "Image.hpp"
 
 #include <SDL_vulkan.h>
 #include <imgui.h>
@@ -176,7 +177,7 @@ namespace rapid
 
 		// Initialize SDL and create the main window.
 		SDL_Init(SDL_INIT_VIDEO);
-		m_Windows.emplace_back(Window("Rapid Editor"));
+		m_Window = std::make_unique<Window>(*this, "Rapid Editor");
 
 		// Initialize the instance and the rest.
 		createInstance();
@@ -198,7 +199,7 @@ namespace rapid
 	{
 		ImGui::DestroyContext();
 
-		m_Windows.clear();
+		m_Window->terminate();
 		SDL_Quit();
 
 		m_DeviceTable.vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &m_CommandBuffer);
@@ -375,6 +376,9 @@ namespace rapid
 
 		// Load the instance functions.
 		volkLoadInstance(m_Instance);
+
+		// Create the surface.
+		m_Window->createSurface();
 	}
 
 	void GraphicsEngine::selectPhysicalDevice()

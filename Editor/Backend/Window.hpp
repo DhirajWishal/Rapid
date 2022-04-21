@@ -11,6 +11,8 @@
 
 namespace rapid
 {
+	class GraphicsEngine;
+
 	/**
 	 * Window class.
 	 * This contains the basic information about the window, and all the rendering parts are done here.
@@ -21,9 +23,10 @@ namespace rapid
 		/**
 		 * Explicit constructor.
 		 *
+		 * @param engine The engine reference.
 		 * @param title The window title.
 		 */
-		explicit Window(std::string_view title);
+		explicit Window(GraphicsEngine& engine, std::string_view title);
 
 		/**
 		 * Destructor.
@@ -37,19 +40,12 @@ namespace rapid
 
 		/**
 		 * Create the Vulkan surface.
-		 *
-		 * @param vInstance The Vulkan instance.
 		 */
-		void createSurface(VkInstance vInstance);
-
-		/**
-		 * Get the required instance extensions.
-		 *
-		 * @return The extension names vector.
-		 */
-		std::vector<const char*> getInstanceExtensions() const;
+		void createSurface();
 
 	private:
+		GraphicsEngine& m_Engine;
+
 		SDL_Window* m_pWindow = nullptr;
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 	};

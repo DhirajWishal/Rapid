@@ -6,6 +6,7 @@
 #include "Queue.hpp"
 
 #include <vk_mem_alloc.h>
+#include <memory>
 
 namespace rapid
 {
@@ -91,6 +92,13 @@ namespace rapid
 		 */
 		VkDevice getLogicalDevice() const { return m_LogicalDevice; }
 
+		/**
+		 * Get the instance.
+		 *
+		 * @return The instance.
+		 */
+		VkInstance getInstance() const { return m_Instance; }
+
 	private:
 		/**
 		 * Initialize the instance.
@@ -130,7 +138,8 @@ namespace rapid
 
 		Queue m_Queue = {};
 
-		std::vector<Window> m_Windows = {};
+		std::unique_ptr<Window> m_Window = nullptr;
+
 		std::vector<const char*> m_ValidationLayers = {};
 
 		VmaAllocator m_vAllocator;

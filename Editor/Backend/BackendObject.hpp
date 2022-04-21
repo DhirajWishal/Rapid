@@ -17,6 +17,13 @@ namespace rapid
 		BackendObject() = default;
 
 		/**
+		 * Explicit constructor.
+		 *
+		 * @param isTerminated Set the value of the internal boolean.
+		 */
+		explicit BackendObject(bool isTerminated) : m_IsTerminated(isTerminated) {}
+
+		/**
 		 * Default destructor.
 		 */
 		~BackendObject() = default;

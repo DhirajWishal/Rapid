@@ -55,78 +55,28 @@ namespace rapid
 	Image::Image(GraphicsEngine& engine, VkExtent3D extent, VkFormat format)
 		: m_Engine(engine), m_Extent(extent), m_Format(format)
 	{
-		// Create image.
-		VkImageCreateInfo imageCreateInfo = {
-			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-			.pNext = nullptr,
-			.flags = 0,
-			.imageType = VK_IMAGE_TYPE_2D,
-			.format = m_Format,
-			.extent = m_Extent,
-			.mipLevels = 1,
-			.arrayLayers = 1,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			.usage = m_Usage,
-			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-			.queueFamilyIndexCount = 0,
-			.pQueueFamilyIndices = nullptr,
-			.initialLayout = m_CurrentLayout,
-		};
+		// Set up all the primitives.
+		createImage();
+		createImageview();
+		createSampler();
+	}
 
-		VmaAllocationCreateInfo allocationCreateInfo = {
-			.usage = VMA_MEMORY_USAGE_GPU_ONLY
-		};
+	Image::Image(GraphicsEngine& engine, VkExtent3D extent, VkFormat format, const std::byte* pImageData)
+		: m_Engine(engine), m_Extent(extent), m_Format(format)
+	{
+		// Set up all the primitives.
+		createImage();
+		createImageview();
+		createSampler();
 
-		utility::ValidateResult(vmaCreateImage(m_Engine.getAllocator(), &imageCreateInfo, &allocationCreateInfo, &m_Image, &m_Allocation, nullptr), "Failed to create the image!");
+		// Copy the image data to the image.
+		auto stagingBuffer = Buffer(m_Engine, size(), BufferType::Staging);
+		auto pBufferMemory = stagingBuffer.mapMemory();
 
-		// Create image view
-		VkImageViewCreateInfo imageViewCreateInfo = {
-			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-			.pNext = nullptr,
-			.flags = 0,
-			.image = m_Image,
-			.viewType = VK_IMAGE_VIEW_TYPE_2D,
-			.format = m_Format,
-			.components = {
-				.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-				.g = VK_COMPONENT_SWIZZLE_IDENTITY,
-				.b = VK_COMPONENT_SWIZZLE_IDENTITY,
-				.a = VK_COMPONENT_SWIZZLE_IDENTITY,
-			},
-			.subresourceRange = {
-				.aspectMask = getImageAspectFlags(),
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1,
-			}
-		};
+		std::copy(pImageData, pImageData + size(), pBufferMemory);
+		stagingBuffer.unmapMemory();
 
-		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateImageView(m_Engine.getLogicalDevice(), &imageViewCreateInfo, nullptr, &m_ImageView), "Failed to create the image view!");
-
-		// Create image sampler.
-		VkSamplerCreateInfo samplerCreateInfo = {
-			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-			.pNext = nullptr,
-			.magFilter = VK_FILTER_LINEAR,
-			.minFilter = VK_FILTER_LINEAR,
-			.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-			.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-			.mipLodBias = 0.0,
-			.anisotropyEnable = VK_TRUE,
-			.maxAnisotropy = m_Engine.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy,
-			.compareEnable = VK_FALSE,
-			.compareOp = VK_COMPARE_OP_ALWAYS,
-			.minLod = 0.0,
-			.maxLod = 1,
-			.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-			.unnormalizedCoordinates = VK_FALSE,
-		};
-
-		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateSampler(m_Engine.getLogicalDevice(), &samplerCreateInfo, nullptr, &m_Sampler), "Failed to create the image sampler!");
+		fromBuffer(stagingBuffer);
 	}
 
 	Image::~Image()
@@ -295,8 +245,7 @@ namespace rapid
 
 	std::unique_ptr<Buffer> Image::toBuffer()
 	{
-		const auto size = static_cast<uint64_t>(m_Extent.width) * m_Extent.height * m_Extent.depth * getPixelSize();
-		auto pBuffer = std::make_unique<Buffer>(m_Engine, size, BufferType::Staging);
+		auto pBuffer = std::make_unique<Buffer>(m_Engine, size(), BufferType::Staging);
 
 		VkBufferImageCopy vImageCopy = {};
 		vImageCopy.imageExtent = m_Extent;
@@ -611,5 +560,84 @@ namespace rapid
 		}
 
 		return 0;
+	}
+
+	void Image::createImage()
+	{
+		VkImageCreateInfo imageCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.imageType = VK_IMAGE_TYPE_2D,
+			.format = m_Format,
+			.extent = m_Extent,
+			.mipLevels = 1,
+			.arrayLayers = 1,
+			.samples = VK_SAMPLE_COUNT_1_BIT,
+			.tiling = VK_IMAGE_TILING_OPTIMAL,
+			.usage = m_Usage,
+			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+			.queueFamilyIndexCount = 0,
+			.pQueueFamilyIndices = nullptr,
+			.initialLayout = m_CurrentLayout,
+		};
+
+		VmaAllocationCreateInfo allocationCreateInfo = {
+			.usage = VMA_MEMORY_USAGE_GPU_ONLY
+		};
+
+		utility::ValidateResult(vmaCreateImage(m_Engine.getAllocator(), &imageCreateInfo, &allocationCreateInfo, &m_Image, &m_Allocation, nullptr), "Failed to create the image!");
+	}
+
+	void Image::createImageview()
+	{
+		VkImageViewCreateInfo imageViewCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.image = m_Image,
+			.viewType = VK_IMAGE_VIEW_TYPE_2D,
+			.format = m_Format,
+			.components = {
+				.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+				.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+				.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+				.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+			},
+			.subresourceRange = {
+				.aspectMask = getImageAspectFlags(),
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1,
+			}
+		};
+
+		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateImageView(m_Engine.getLogicalDevice(), &imageViewCreateInfo, nullptr, &m_ImageView), "Failed to create the image view!");
+	}
+
+	void Image::createSampler()
+	{
+		VkSamplerCreateInfo samplerCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+			.pNext = nullptr,
+			.magFilter = VK_FILTER_LINEAR,
+			.minFilter = VK_FILTER_LINEAR,
+			.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+			.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.mipLodBias = 0.0,
+			.anisotropyEnable = VK_TRUE,
+			.maxAnisotropy = m_Engine.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy,
+			.compareEnable = VK_FALSE,
+			.compareOp = VK_COMPARE_OP_ALWAYS,
+			.minLod = 0.0,
+			.maxLod = 1,
+			.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+			.unnormalizedCoordinates = VK_FALSE,
+		};
+
+		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateSampler(m_Engine.getLogicalDevice(), &samplerCreateInfo, nullptr, &m_Sampler), "Failed to create the image sampler!");
 	}
 }

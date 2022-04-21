@@ -18,6 +18,8 @@ add_library(
 	BackendObject.hpp
 	Image.cpp
 	Image.hpp
+	ImGuiNode.cpp
+	ImGuiNode.hpp
 )
 
 # Set the include directory.
