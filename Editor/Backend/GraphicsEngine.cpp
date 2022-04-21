@@ -9,6 +9,8 @@
 #include <spdlog/spdlog.h>
 
 #include <fstream>
+#include <array>
+#include <set>
 
 namespace
 {
@@ -118,6 +120,51 @@ namespace
 	}
 
 #endif
+
+	/**
+	 * Check device extension support.
+	 *
+	 * @param vPhysicalDevice The physical device to check.
+	 * @param deviceExtensions The extension to check.
+	 */
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions)
+	{
+		// If there are no extension to check, we can just return true.
+		if (deviceExtensions.empty())
+			return true;
+
+		// Get the extension count.
+		uint32_t extensionCount = 0;
+		rapid::utility::ValidateResult(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, nullptr), "Failed to enumerate physical device extension property count!");
+
+		// Load the extensions.
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		rapid::utility::ValidateResult(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, availableExtensions.data()), "Failed to enumerate physical device extension properties!");
+
+		std::set<std::string_view> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+		// Iterate and check if it contains the extensions we need. If it does, remove them from the set so we can later check if 
+		// all the required extensions exist.
+		for (const VkExtensionProperties& extension : availableExtensions)
+			requiredExtensions.erase(extension.extensionName);
+
+		// If the required extensions set is empty, it means that all the required extensions exist within the physical device.
+		return requiredExtensions.empty();
+	}
+
+	/**
+	 * Check if a physical device is suitable.
+	 *
+	 * @param vPhysicalDevice The physical device to check.
+	 * @param deviceExtensions The device extension to check.
+	 */
+	bool IsPhysicalDeviceSuitable(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions)
+	{
+		// Check if all the provided queue flags are supported.
+		const auto queue = rapid::Queue(vPhysicalDevice);
+
+		return CheckDeviceExtensionSupport(vPhysicalDevice, deviceExtensions) && queue.isComplete();
+	}
 }
 
 namespace rapid
@@ -153,11 +200,13 @@ namespace rapid
 		m_Windows.clear();
 		SDL_Quit();
 
+		vkDestroyDevice(m_LogicalDevice, nullptr);
+
 #ifdef RAPID_DEBUG
 		const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT"));
 		vkDestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 
-#endif
+#endif // RAPID_DEBUG
 
 		vkDestroyInstance(m_Instance, nullptr);
 
@@ -243,7 +292,7 @@ namespace rapid
 		instanceCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 		instanceCreateInfo.pNext = &debugMessengerCreateInfo;
 
-#endif
+#endif // RAPID_DEBUG
 
 		// Create the instance.
 		utility::ValidateResult(vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance), "Failed to create the Vulkan instance!");
@@ -252,15 +301,156 @@ namespace rapid
 		const auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT"));
 		utility::ValidateResult(vkCreateDebugUtilsMessengerEXT(m_Instance, &debugMessengerCreateInfo, nullptr, &m_DebugMessenger), "Failed to create the debug messenger.");
 
-#endif
+#endif // RAPID_DEBUG
+
+		// Load the instance functions.
+		volkLoadInstance(m_Instance);
 	}
 
 	void GraphicsEngine::selectPhysicalDevice()
 	{
+		// Enumerate physical devices.
+		uint32_t deviceCount = 0;
+		utility::ValidateResult(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr), "Failed to enumerate physical devices.");
+
+		// Throw an error if there are no physical devices available.
+		if (deviceCount == 0)
+		{
+			spdlog::error("No physical devices found!");
+			return;
+		}
+
+		std::vector<VkPhysicalDevice> vCandidates(deviceCount);
+		utility::ValidateResult(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, vCandidates.data()), "Failed to enumerate physical devices.");
+
+		struct Candidate { VkPhysicalDeviceProperties m_Properties; VkPhysicalDevice m_Candidate; };
+		std::array<Candidate, 6> vPriorityMap;
+
+		// Iterate through all the candidate devices and find the best device.
+		for (const auto& vCandidateDevice : vCandidates)
+		{
+			// Check if the device is suitable for our use.
+			if (IsPhysicalDeviceSuitable(vCandidateDevice, {}))
+			{
+				VkPhysicalDeviceProperties vPhysicalDeviceProperties = {};
+				vkGetPhysicalDeviceProperties(vCandidateDevice, &vPhysicalDeviceProperties);
+
+				// Sort the candidates by priority.
+				uint8_t priorityIndex = 5;
+				switch (vPhysicalDeviceProperties.deviceType)
+				{
+				case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+					priorityIndex = 0;
+					break;
+
+				case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+					priorityIndex = 1;
+					break;
+
+				case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+					priorityIndex = 2;
+					break;
+
+				case VK_PHYSICAL_DEVICE_TYPE_CPU:
+					priorityIndex = 3;
+					break;
+
+				case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+					priorityIndex = 4;
+					break;
+
+				default:
+					priorityIndex = 5;
+					break;
+				}
+
+				vPriorityMap[priorityIndex].m_Candidate = vCandidateDevice;
+				vPriorityMap[priorityIndex].m_Properties = vPhysicalDeviceProperties;
+			}
+		}
+
+		// Choose the physical device with the highest priority.
+		for (const auto& candidate : vPriorityMap)
+		{
+			if (candidate.m_Candidate != VK_NULL_HANDLE)
+			{
+				m_PhysicalDevice = candidate.m_Candidate;
+				m_Properties = candidate.m_Properties;
+				break;
+			}
+		}
+
+		if (m_PhysicalDevice == VK_NULL_HANDLE)
+		{
+			spdlog::error("Failed to find a suitable physical device!");
+			return;
+		}
+
+		// Create the queue.
+		m_Queue = Queue(m_PhysicalDevice);
 	}
 
 	void GraphicsEngine::createLogicalDevice()
 	{
+		// Setup device queues.
+		constexpr float priority = 1.0f;
+		std::set<uint32_t> uniqueQueueFamilies = {
+			m_Queue.getTransferFamily().value(),
+			m_Queue.getGraphicsFamily().value()
+		};
+
+		std::vector< VkDeviceQueueCreateInfo> queueCreateInfos;
+
+		VkDeviceQueueCreateInfo queueCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.queueFamilyIndex = 0,
+			.queueCount = 1,
+			.pQueuePriorities = &priority,
+		};
+
+		for (const auto& family : uniqueQueueFamilies)
+		{
+			queueCreateInfo.queueFamilyIndex = family;
+			queueCreateInfos.emplace_back(queueCreateInfo);
+		}
+
+		VkPhysicalDeviceFeatures features = {};
+		//features.samplerAnisotropy = VK_TRUE;
+		//features.sampleRateShading = VK_TRUE;
+		//features.tessellationShader = VK_TRUE;
+
+		// Device create info.
+		VkDeviceCreateInfo deviceCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
+			.pQueueCreateInfos = queueCreateInfos.data(),
+			.enabledLayerCount = 0,
+			.ppEnabledLayerNames = nullptr,
+			.enabledExtensionCount = 0,
+			.ppEnabledExtensionNames = nullptr,
+			.pEnabledFeatures = &features
+		};
+
+#ifdef RAPID_DEBUG
+		// Get the validation layers and initialize it.
+		deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
+		deviceCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
+
+#endif // RAPID_DEBUG
+
+		// Create the device.
+		utility::ValidateResult(vkCreateDevice(m_PhysicalDevice, &deviceCreateInfo, nullptr, &m_LogicalDevice), "Failed to create the logical device!");
+
+		// Load the device table.
+		volkLoadDeviceTable(&m_DeviceTable, m_LogicalDevice);
+
+		// Get the queues.
+		vkGetDeviceQueue(m_LogicalDevice, m_Queue.getTransferFamily().value(), 0, &m_Queue.getTransferQueue());
+		vkGetDeviceQueue(m_LogicalDevice, m_Queue.getGraphicsFamily().value(), 0, &m_Queue.getGraphicsQueue());
 	}
 
 	void GraphicsEngine::setupImGui() const

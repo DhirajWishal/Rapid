@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Window.hpp"
+#include "Queue.hpp"
 
 #include <vk_mem_alloc.h>
 
@@ -66,6 +67,9 @@ namespace rapid
 
 	private:
 		VolkDeviceTable m_DeviceTable = {};
+		VkPhysicalDeviceProperties m_Properties = {};
+
+		Queue m_Queue = {};
 
 		std::vector<Window> m_Windows = {};
 		std::vector<const char*> m_ValidationLayers = {};

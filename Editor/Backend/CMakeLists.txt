@@ -9,7 +9,11 @@ add_library(
 	GraphicsEngine.hpp
 	Utility.cpp
 	Utility.hpp
- "Window.hpp" "Window.cpp")
+	Window.cpp 
+	Window.hpp
+	Queue.cpp
+	Queue.hpp
+)
 
 # Set the include directory.
 target_include_directories(
