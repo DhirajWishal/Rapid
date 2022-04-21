@@ -3,6 +3,7 @@
 #include "Backend/ImGuiNode.hpp"
 #include "Backend/Window.hpp"
 #include "Backend/ShaderCode.hpp"
+#include "Backend/GraphicsPipeline.hpp"
 
 #ifdef main 
 #undef main
@@ -17,9 +18,11 @@ int main()
 	{
 		const auto vertexShader = rapid::ShaderCode("Shaders/vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
 		const auto fragmentShader = rapid::ShaderCode("Shaders/frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
+
+		const auto pipeline = rapid::GraphicsPipeline(engine, window, vertexShader, fragmentShader);
 	}
 
-	uint64_t counter = 1000000000;
+	uint64_t counter = 100000;
 	while (counter--)
 	{
 		window.pollEvents();

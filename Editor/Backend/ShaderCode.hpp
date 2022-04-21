@@ -2,11 +2,9 @@
 
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include "GraphicsEngine.hpp"
 
 #include <filesystem>
-#include <vector>
-#include <cstdint>
 #include <unordered_map>
 
 namespace rapid
@@ -48,6 +46,14 @@ namespace rapid
 		 */
 		explicit ShaderCode(std::filesystem::path&& file, VkShaderStageFlags stageFlags);
 
+		/**
+		 * Create the shader module.
+		 *
+		 * @param engine The engine.
+		 * @return The shader module.
+		 */
+		VkShaderModule createModule(GraphicsEngine& engine) const;
+
 		std::vector<uint32_t> m_ShaderCode;
 		std::filesystem::path m_FilePath;
 
@@ -55,6 +61,7 @@ namespace rapid
 		std::vector<ShaderAttribute> m_InputAttributes;
 		std::vector<ShaderAttribute> m_OutputAttributes;
 		std::vector<VkPushConstantRange> m_PushConstants;
+		std::vector<VkDescriptorSetLayoutBinding> m_LayoutBindings;
 
 		const VkShaderStageFlags m_Flags;
 

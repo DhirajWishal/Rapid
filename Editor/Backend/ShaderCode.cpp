@@ -1,6 +1,7 @@
 // Copyright (c) 2022 Dhiraj Wishal
 
 #include "ShaderCode.hpp"
+#include "Utility.hpp"
 
 #include <spirv_reflect.h>
 #include <spdlog/spdlog.h>
@@ -38,7 +39,7 @@ namespace
 		case SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_BLOCK_MEMBER_REFERENCE:		spdlog::error("Shader invalid SPIRV block member reference!"); break;
 		case SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_ENTRY_POINT:				spdlog::error("Shader invalid SPIRV entry point!"); break;
 		case SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_EXECUTION_MODE:				spdlog::error("Shader invalid SPIRV execution mode!"); break;
-		default:																spdlog::error("Unknown reflection error!"); 
+		default:																spdlog::error("Unknown reflection error!");
 		}
 	}
 
@@ -79,6 +80,22 @@ namespace rapid
 	{
 		loadShaderCode();
 		performReflection();
+	}
+
+	VkShaderModule ShaderCode::createModule(GraphicsEngine& engine) const
+	{
+		VkShaderModuleCreateInfo createInfo = {
+			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.codeSize = m_ShaderCode.size(),
+			.pCode = m_ShaderCode.data(),
+		};
+
+		VkShaderModule shaderModule = VK_NULL_HANDLE;
+		utility::ValidateResult(engine.getDeviceTable().vkCreateShaderModule(engine.getLogicalDevice(), &createInfo, nullptr, &shaderModule), "Failed to create the shader module!");
+
+		return shaderModule;
 	}
 
 	void ShaderCode::loadShaderCode()
@@ -187,6 +204,8 @@ namespace rapid
 			std::vector<SpvReflectDescriptorBinding*> pBindings(variableCount);
 			ValidateReflection(spvReflectEnumerateDescriptorBindings(&shaderModule, &variableCount, pBindings.data()));
 
+			m_LayoutBindings.reserve(variableCount);
+
 			VkDescriptorSetLayoutBinding vBinding = {};
 			vBinding.stageFlags = m_Flags;
 			vBinding.pImmutableSamplers = VK_NULL_HANDLE;
@@ -197,6 +216,7 @@ namespace rapid
 				vBinding.descriptorType = GetVkDescriptorType(resource->descriptor_type);
 				vBinding.descriptorCount = resource->count;
 				vBinding.binding = resource->binding;
+				m_LayoutBindings.emplace_back(vBinding);
 
 				ShaderBinding binding;
 				binding.m_Binding = resource->binding;
