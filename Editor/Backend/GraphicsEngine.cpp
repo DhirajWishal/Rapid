@@ -166,17 +166,48 @@ namespace
 
 		return CheckDeviceExtensionSupport(vPhysicalDevice, deviceExtensions) && queue.isComplete();
 	}
+
+    /**
+     * Static initializer class.
+     * This class is initialized as a static variable and contains the initialization functions required to be run
+     * only once.
+     */
+    struct StaticInitializer
+    {
+        /**
+         * Default constructor.
+         */
+        StaticInitializer()
+        {
+            // First, initialize volk. Without this we can't do anything else.
+            rapid::utility::ValidateResult(volkInitialize(), "Failed to initialize volk!");
+
+            // Initialize SDL and create the main window.
+            SDL_Init(SDL_INIT_VIDEO);
+
+            // Initialize the ImGui context.
+            ImGui::CreateContext();
+        }
+
+        /**
+         * Default destructor.
+         */
+        ~StaticInitializer()
+        {
+            ImGui::DestroyContext();
+            SDL_Quit();
+        }
+    };
 }
 
 namespace rapid
 {
 	GraphicsEngine::GraphicsEngine()
 	{
-		// FIrst of all, initialize volk. Without this we can't do anything else.
-		utility::ValidateResult(volkInitialize(), "Failed to initialize volk!");
+        // Set up the static initializer.
+        static StaticInitializer initializer;
 
-		// Initialize SDL and create the main window.
-		SDL_Init(SDL_INIT_VIDEO);
+        // Create the main window.
 		m_Window = std::make_unique<Window>(*this, "Rapid Editor");
 
 		// Initialize the instance and the rest.
@@ -197,10 +228,7 @@ namespace rapid
 
 	void GraphicsEngine::terminate()
 	{
-		ImGui::DestroyContext();
-
 		m_Window->terminate();
-		SDL_Quit();
 
 		m_DeviceTable.vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &m_CommandBuffer);
 		m_DeviceTable.vkDestroyCommandPool(m_LogicalDevice, m_CommandPool, nullptr);
@@ -577,7 +605,6 @@ namespace rapid
 
 	void GraphicsEngine::setupImGui() const
 	{
-		ImGui::CreateContext();
 		ImGuiStyle& style = ImGui::GetStyle();
 
 		const auto backgroundColor = ImVec4(CreateColor256(34), CreateColor256(40), CreateColor256(49), 1.0f);

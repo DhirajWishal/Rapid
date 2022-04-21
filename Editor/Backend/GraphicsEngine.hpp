@@ -99,6 +99,13 @@ namespace rapid
 		 */
 		VkInstance getInstance() const { return m_Instance; }
 
+        /**
+         * Get the queue object.
+         *
+         * @return The queue object.
+         */
+        Queue getQueue() const { return m_Queue; }
+
 	private:
 		/**
 		 * Initialize the instance.

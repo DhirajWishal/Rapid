@@ -19,10 +19,22 @@ namespace rapid
 		 * @param engine The graphics engine.
 		 * @param count The command buffer count.
 		 */
-		//explicit CommandBufferAllocator(GraphicsEngine& engine, uint8_t count);
+		explicit CommandBufferAllocator(GraphicsEngine& engine, uint8_t count);
+
+        /**
+         * Destructor.
+         */
+        ~CommandBufferAllocator();
+
+        /**
+         * Terminate the allocator.
+         */
+        void terminate() override;
 
 	private:
 		GraphicsEngine& m_Engine;
+        VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+
 		const uint8_t m_BufferCount;
 	};
 }
