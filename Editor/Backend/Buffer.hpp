@@ -28,7 +28,7 @@ namespace rapid
 	 * Buffer object.
 	 * This object is used to store information about a single buffer.
 	 */
-	class Buffer final : BackendObject
+	class Buffer final : public BackendObject
 	{
 	public:
 		/**

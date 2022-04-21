@@ -20,7 +20,7 @@ add_library(
 	Image.hpp
 	ImGuiNode.cpp
 	ImGuiNode.hpp
-)
+ "ProcessingNode.hpp")
 
 # Set the include directory.
 target_include_directories(

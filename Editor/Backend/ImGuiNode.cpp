@@ -7,7 +7,7 @@
 namespace rapid
 {
 	ImGuiNode::ImGuiNode(GraphicsEngine& engine)
-		: m_Engine(engine)
+		: ProcessingNode(engine)
 	{
 		// Load the font image to a Vulkan image.
 		std::byte* pFontImageData = nullptr;
@@ -31,4 +31,8 @@ namespace rapid
 		m_IsTerminated = true;
 	}
 
+	void ImGuiNode::bind(VkCommandBuffer vCommandBuffer)
+	{
+
+	}
 }

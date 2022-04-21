@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "ProcessingNode.hpp"
 #include "Image.hpp"
 
 namespace rapid
@@ -10,7 +11,7 @@ namespace rapid
 	 * ImGui node object.
 	 * This node acts as a single processing unit in the rendering pipeline, and contains everything needed by ImGui to render to the screen.
 	 */
-	class ImGuiNode final : public BackendObject
+	class ImGuiNode final : public ProcessingNode
 	{
 	public:
 		/**
@@ -30,9 +31,14 @@ namespace rapid
 		 */
 		void terminate() override;
 
+		/**
+		 * Bind the resources to the command buffer.
+		 *
+		 * @param vCommandBuffer The command buffer to bind to.
+		 */
+		void bind(VkCommandBuffer vCommandBuffer) override;
+
 	private:
 		std::unique_ptr<Image> m_FontImage = nullptr;
-
-		GraphicsEngine& m_Engine;
 	};
 }

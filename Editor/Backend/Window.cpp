@@ -13,7 +13,7 @@ namespace rapid
 	{
 		// Check if the window creation was successful.
 		if (!m_pWindow)
-			spdlog::error("Failed to create the window!");
+			spdlog::error("Failed to create the window! Error message: {}", SDL_GetError());
 	}
 
 	Window::~Window()
@@ -24,8 +24,10 @@ namespace rapid
 
 	void Window::terminate()
 	{
+		// Yes we need to check it here, because there could be a place where we didn't create the surface (for some reason idk).
 		if (m_Surface)
 			vkDestroySurfaceKHR(m_Engine.getInstance(), m_Surface, nullptr);
+
 		m_IsTerminated = true;
 	}
 
