@@ -85,7 +85,7 @@ namespace rapid
 		int32_t width = 0, height = 0;
 		SDL_GetWindowSize(m_pWindow, &width, &height);
 
-		return VkExtent2D(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+		return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 	}
 
 	uint32_t Window::getBestBufferCount() const
