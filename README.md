@@ -2,17 +2,26 @@
 
 Visual code editor primarily built for game engines.
 
-## Motivation
+## Why Rapid
 
-There were two major reasons to develop this software. One being because I was looking into visual programming, and how it could improve programming in general.
-The second being that I was developing a game/ graphics engine, and it would be nice to have a visual programming feature to it, so that we can easily edit and
-test out pipelines and shaders. This got me thinking, why not expand it to support C++, and then let game engines use this as a scripting language. But with the
-added benefit of it being coded in C++. Most modern game engines are based on C++, and use different scripting languages to code the game logic. For Unreal Engine
-we have C++ and blueprints. For Unity we have C# scripts. Godot engine has their own scripting language. Wouldn't it be easier to have a scripting-like language
-which you can easily develop with the native language which the engine is built up upon?
+There were two main reasons to develop this software. One being because I was looking into visual programming as a viable way of programming, and how it could
+improve programming in general. The second begin that I was developing a game/ graphics engine and it would be nice to have a visual programming feature to it,
+so that we can easily edit and test out pipeline and shaders.
 
-This makes engine design and development even more simpler, as everything can be done using visual scripting, thus improving development times, lowering the bar
-for people who are new to game dev, having the performance you are looking for, reducing the engine complexity and much more.
+This got me thinking, why not expand it to C++ and then let game engines use this as a scripting language. But with the added benefit of it being coded in C++
+rather than a scripting language.
+
+The reason for game engines to use a scripting language for their game logic, for Unreal we got C++ and the blueprint system, Unity uses C# and Godot has their
+own scripting language. This is because developers can less focus on the nitty-gritty things of C++, and just script the game logic which directly impact the
+development times. But one problem with this approach is that it won't perform as well as just developing it in C++, or the engine is required to be more
+complex to do JIT, transpilation or any other thing to optimize it so that we won't waste a lot of performance.
+
+But if there is a way for us to speed up C++ development, lower the bar for new game developers to learn how to develop game logic, and to not worry much about
+performance and ease the burden from the developers' side of things, it would be great!
+
+That's the reason why I decided to develop Rapid, making it easier for game engine developers to straight up use C++ to code their game logic and not having to
+deal with multiple languages and scripting engines to get this part done, while also being flexible enough for them to come up with their own game programming
+library rather than having to use a pre-defined set of templates.
 
 ## License
 
