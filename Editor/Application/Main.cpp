@@ -19,7 +19,7 @@ int main()
 		const auto vertexShader = rapid::ShaderCode("Shaders/vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
 		const auto fragmentShader = rapid::ShaderCode("Shaders/frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
 
-		const auto pipeline = rapid::GraphicsPipeline(engine, window, vertexShader, fragmentShader);
+		const auto pipeline = rapid::GraphicsPipeline(engine, window, "PipelineCache.bin", vertexShader, fragmentShader);
 	}
 
 	uint64_t counter = 100000;

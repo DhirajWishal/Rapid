@@ -21,10 +21,11 @@ namespace rapid
 		 *
 		 * @param engine The graphic engine.
 		 * @param window The window which owns the pipeline.
+		 * @param cache The cache file name.
 		 * @param vertex The vertex shader code.
 		 * @param fragment The fragment shader code.
 		 */
-		explicit GraphicsPipeline(GraphicsEngine& engine, Window& window, const ShaderCode& vertex, const ShaderCode& fragment);
+		explicit GraphicsPipeline(GraphicsEngine& engine, Window& window, std::filesystem::path&& cache, const ShaderCode& vertex, const ShaderCode& fragment);
 
 		/**
 		 * Destructor.
@@ -68,6 +69,7 @@ namespace rapid
 		void createPipeline();
 
 	private:
+		std::filesystem::path m_CacheFile;
 		std::vector<ShaderCode> m_ShaderCode = {};	// This is not the best move, but we need it for pipeline re-creation.
 
 		GraphicsEngine& m_Engine;

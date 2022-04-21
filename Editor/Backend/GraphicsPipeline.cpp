@@ -4,6 +4,7 @@
 #include "Utility.hpp"
 
 #include <spdlog/spdlog.h>
+#include <fstream>
 
 namespace
 {
@@ -62,12 +63,26 @@ namespace
 
 		return VkFormat::VK_FORMAT_UNDEFINED;
 	}
+
+	/**
+	 * Create a file if it does not exist.
+	 *
+	 * @param path The file.
+	 */
+	void CreateIfNotExist(const std::filesystem::path& path)
+	{
+		if (!std::filesystem::exists(path))
+		{
+			std::fstream file(path, std::ios::out);
+			file.close();
+		}
+	}
 }
 
 namespace rapid
 {
-	GraphicsPipeline::GraphicsPipeline(GraphicsEngine& engine, Window& window, const ShaderCode& vertex, const ShaderCode& fragment)
-		: m_Engine(engine), m_Window(window), m_ShaderCode({ vertex, fragment })
+	GraphicsPipeline::GraphicsPipeline(GraphicsEngine& engine, Window& window, std::filesystem::path&& cache, const ShaderCode& vertex, const ShaderCode& fragment)
+		: m_CacheFile(std::move(cache)), m_ShaderCode({ vertex, fragment }), m_Engine(engine), m_Window(window)
 	{
 		// Create one binding blob.
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings(vertex.m_LayoutBindings.begin(), vertex.m_LayoutBindings.end());
@@ -150,10 +165,64 @@ namespace rapid
 
 	void GraphicsPipeline::loadPipelineCache()
 	{
+		// Check to make sure that we have the file.
+		CreateIfNotExist(m_CacheFile);
+
+		// Load data from file.
+		std::fstream cacheFile(m_CacheFile, std::ios::in | std::ios::ate | std::ios::binary);
+
+		// If file does not exist, return without an issue.
+		if (!cacheFile.is_open())
+		{
+			spdlog::error("Failed to load the cache file! Given path: {}", m_CacheFile.string());
+			return;
+		}
+
+		const uint64_t size = cacheFile.tellg();
+		cacheFile.seekg(0);
+
+		auto buffer = std::make_unique<uint8_t[]>(size);
+		cacheFile.read(reinterpret_cast<char*>(buffer.get()), size);
+
+		cacheFile.close();
+
+		// Create the pipeline cache.
+		VkPipelineCacheCreateInfo createInfo = {
+			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+			.pNext = VK_NULL_HANDLE,
+			.flags = 0,
+			.initialDataSize = size,
+			.pInitialData = buffer.get(),
+		};
+
+		utility::ValidateResult(m_Engine.getDeviceTable().vkCreatePipelineCache(m_Engine.getLogicalDevice(), &createInfo, nullptr, &m_PipelineCache), "Failed to create the pipeline cache!");
 	}
 
 	void GraphicsPipeline::savePipelineCache()
 	{
+		// Return if we don't have anything to save.
+		if (m_PipelineCache == VK_NULL_HANDLE)
+			return;
+
+		// Load cache data.
+		uint64_t cacheSize = 0;
+		utility::ValidateResult(m_Engine.getDeviceTable().vkGetPipelineCacheData(m_Engine.getLogicalDevice(), m_PipelineCache, &cacheSize, nullptr), "Failed to get the pipeline cache size!");
+
+		auto buffer = std::make_unique<uint8_t[]>(cacheSize);
+		utility::ValidateResult(m_Engine.getDeviceTable().vkGetPipelineCacheData(m_Engine.getLogicalDevice(), m_PipelineCache, &cacheSize, buffer.get()), "Failed to get the pipeline cache data!");
+
+		// Write to file.
+		std::fstream cacheFile(m_CacheFile, std::ios::out | std::ios::binary);
+
+		if (!cacheFile.is_open())
+		{
+			spdlog::error("Failed to load the cache file! Given path: {}", m_CacheFile.string());
+			return;
+		}
+
+		cacheFile.write(reinterpret_cast<char*>(buffer.get()), cacheSize);
+		cacheFile.flush();
+		cacheFile.close();
 	}
 
 	void GraphicsPipeline::createPipeline()
