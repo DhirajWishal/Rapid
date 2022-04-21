@@ -29,6 +29,10 @@ add_library(
 
 set_property(TARGET volk PROPERTY CXX_STANDARD 20)
 
+if(NOT MSVC)
+	target_compile_options(volk PUBLIC "-ldl")
+endif()
+
 # Add the Vulkan include directory for the volk library.
 target_include_directories(volk PUBLIC ${VULKAN_INCLUDE_DIR})
 
