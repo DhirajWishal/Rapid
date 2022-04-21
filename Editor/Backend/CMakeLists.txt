@@ -56,3 +56,8 @@ target_link_libraries(
 
 # Set the C++ standard as C++20.
 set_property(TARGET Backend PROPERTY CXX_STANDARD 20)
+
+# Make sure to add the -fconcepts flag if we are not in MSVC.
+if(NOT MSVC)
+	target_compile_options(Backend PUBLIC "-fconcepts")
+endif()
