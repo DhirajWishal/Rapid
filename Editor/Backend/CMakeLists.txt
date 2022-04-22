@@ -60,6 +60,6 @@ target_link_libraries(
 set_property(TARGET Backend PROPERTY CXX_STANDARD 20)
 
 # Make sure to add the -fconcepts flag if we are not in MSVC and not in APPLE.
-if(NOT MSVC AND NOT APPLE)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	target_compile_options(Backend PUBLIC "-fconcepts")
 endif()
