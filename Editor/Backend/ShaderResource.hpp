@@ -35,7 +35,7 @@ namespace rapid
 
 		/**
 		 * Bind a buffer to the given location.
-		 * 
+		 *
 		 * @param location The location to bind to.
 		 * @param buffer The buffer to bind.
 		 */
@@ -48,6 +48,13 @@ namespace rapid
 		 * @param image The image to bind.
 		 */
 		void bindResource(uint32_t location, const Image& image);
+
+		/**
+		 * Get the descriptor set.
+		 *
+		 * @return The descriptor set.
+		 */
+		VkDescriptorSet getDescriptorSet() const { return m_DescriptorSet; }
 
 	private:
 		std::set<uint32_t> m_Bindings;

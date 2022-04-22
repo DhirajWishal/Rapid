@@ -43,6 +43,20 @@ namespace rapid
 		 */
 		ShaderResource& createShaderResource();
 
+		/**
+		 * Get the pipeline handle.
+		 *
+		 * @return The pipeline handle.
+		 */
+		VkPipeline getPipeline() const { return m_Pipeline; }
+
+		/**
+		 * Get the pipeline layout handle.
+		 *
+		 * @return The pipeline layout handle.
+		 */
+		VkPipelineLayout getPipelineLayout() const { return m_PipelineLayout; }
+
 	private:
 		/**
 		 * Setup the descriptor set layout.

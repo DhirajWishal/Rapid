@@ -68,6 +68,13 @@ namespace rapid
 		 */
 		VkRenderPass getRenderPass() const { return m_RenderPass; }
 
+		/**
+		 * Get the current frame buffer.
+		 *
+		 * @return The frame buffer.
+		 */
+		VkFramebuffer getCurrentFrameBuffer() const { return m_Framebuffers[m_FrameIndex]; }
+
 	private:
 		/**
 		 * Get the best buffer count.
