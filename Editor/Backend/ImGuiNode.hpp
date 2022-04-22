@@ -60,6 +60,11 @@ namespace rapid
 		 */
 		void updateBuffers();
 
+		/**
+		 * Resolve the keyboard inputs.
+		 */
+		void resolveKeyboardInputs() const;
+
 	private:
 		std::vector<ShaderResource*> m_ShaderResources = {};
 

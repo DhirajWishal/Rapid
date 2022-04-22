@@ -57,14 +57,12 @@ namespace rapid
 		m_CommandBufferAllocator->terminate();
 		m_Engine.getDeviceTable().vkDestroyRenderPass(m_Engine.getLogicalDevice(), m_RenderPass, nullptr);
 
-		for (auto vFrameBuffer : m_Framebuffers)
-			m_Engine.getDeviceTable().vkDestroyFramebuffer(m_Engine.getLogicalDevice(), vFrameBuffer, nullptr);
-
-		for (auto vSemaphore : m_RenderFinishedSemaphores)
-			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), vSemaphore, nullptr);
-
-		for (auto vSemaphore : m_InFlightSemaphores)
-			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), vSemaphore, nullptr);
+		for (uint32_t i = 0; i < m_FrameCount; i++)
+		{
+			m_Engine.getDeviceTable().vkDestroyFramebuffer(m_Engine.getLogicalDevice(), m_Framebuffers[i], nullptr);
+			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), m_RenderFinishedSemaphores[i], nullptr);
+			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), m_InFlightSemaphores[i], nullptr);
+		}
 
 		clearSwapchain();
 		vkDestroySurfaceKHR(m_Engine.getInstance(), m_Surface, nullptr);
@@ -74,7 +72,7 @@ namespace rapid
 	bool Window::pollEvents()
 	{
 		SDL_Event sdlEvent = {};
-		const auto isAvailable = SDL_PollEvent(&sdlEvent);
+		[[maybe_unused]] const auto isAvailable = SDL_PollEvent(&sdlEvent);
 
 		// Close the application.
 		if (sdlEvent.type == SDL_QUIT)
@@ -92,9 +90,7 @@ namespace rapid
 			return pollEvents();
 		}
 
-		else
-			utility::ValidateResult(result, "Failed to acquire the next swap chain image!");
-
+		utility::ValidateResult(result, "Failed to acquire the next swap chain image!");
 		return true;
 	}
 
