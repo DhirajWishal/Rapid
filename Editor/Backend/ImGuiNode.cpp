@@ -71,7 +71,7 @@ namespace rapid
 		ImGuiIO& imGuiIO = ImGui::GetIO();
 		imGuiIO.Fonts->GetTexDataAsRGBA32(reinterpret_cast<uint8_t**>(&pFontImageData), &width, &height, &bitsPerPixel);
 
-		m_FontImage = std::make_unique<Image>(m_Engine, VkExtent3D{ static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1u }, VkFormat::VK_FORMAT_R8G8B8A8_SRGB, pFontImageData);
+		m_FontImage = std::make_unique<Image>(m_Engine, VkExtent3D{ static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1u }, VkFormat::VK_FORMAT_R8G8B8A8_UNORM, pFontImageData);
 		m_FontImage->changeImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		// Also set the window size.
@@ -79,9 +79,13 @@ namespace rapid
 		imGuiIO.DisplaySize.x = windowExtent.width;
 		imGuiIO.DisplaySize.y = windowExtent.height;
 
+		// The vertex shader needs to be treated differently, because we need to switch data types.
+		auto vertexShader = rapid::ShaderCode("Shaders/vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
+		vertexShader.m_InputAttributes[2].m_Size = 4;
+
 		// Create the graphics pipeline.
 		m_Pipeline = std::make_unique<GraphicsPipeline>(m_Engine, m_Window, "ImGuiPipelineCache.bin",
-			rapid::ShaderCode("Shaders/vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT),
+			vertexShader,
 			rapid::ShaderCode("Shaders/frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT));
 
 		// Setup shader resources.
@@ -185,7 +189,7 @@ namespace rapid
 		if (pDrawData->CmdListsCount)
 		{
 			commandBuffer.bindVertexBuffer(*m_VertexBuffer);
-			commandBuffer.bindIndexBuffer(*m_IndexBuffer);
+			commandBuffer.bindIndexBuffer(*m_IndexBuffer, VkIndexType::VK_INDEX_TYPE_UINT16);
 			commandBuffer.bindPipeline(*m_Pipeline);
 
 			uint64_t vertexOffset = 0, indexOffset = 0;
