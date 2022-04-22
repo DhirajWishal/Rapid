@@ -438,7 +438,7 @@ namespace rapid
 		utility::ValidateResult(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, vCandidates.data()), "Failed to enumerate physical devices.");
 
 		struct Candidate { VkPhysicalDeviceProperties m_Properties; VkPhysicalDevice m_Candidate; };
-		std::array<Candidate, 6> vPriorityMap;
+		std::array<Candidate, 6> vPriorityMap = { Candidate() };
 
 		// Iterate through all the candidate devices and find the best device.
 		for (const auto& vCandidateDevice : vCandidates)
@@ -526,11 +526,11 @@ namespace rapid
 			.vkCreateImage = m_DeviceTable.vkCreateImage,
 			.vkDestroyImage = m_DeviceTable.vkDestroyImage,
 			.vkCmdCopyBuffer = m_DeviceTable.vkCmdCopyBuffer,
-			.vkGetBufferMemoryRequirements2KHR = m_DeviceTable.vkGetBufferMemoryRequirements2,
-			.vkGetImageMemoryRequirements2KHR = m_DeviceTable.vkGetImageMemoryRequirements2,
-			.vkBindBufferMemory2KHR = m_DeviceTable.vkBindBufferMemory2,
-			.vkBindImageMemory2KHR = m_DeviceTable.vkBindImageMemory2,
-			.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2,
+			.vkGetBufferMemoryRequirements2KHR = m_DeviceTable.vkGetBufferMemoryRequirements2KHR,
+			.vkGetImageMemoryRequirements2KHR = m_DeviceTable.vkGetImageMemoryRequirements2KHR,
+			.vkBindBufferMemory2KHR = m_DeviceTable.vkBindBufferMemory2KHR,
+			.vkBindImageMemory2KHR = m_DeviceTable.vkBindImageMemory2KHR,
+			.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2KHR,
 			.vkGetDeviceBufferMemoryRequirements = m_DeviceTable.vkGetDeviceBufferMemoryRequirements,
 			.vkGetDeviceImageMemoryRequirements = m_DeviceTable.vkGetDeviceImageMemoryRequirements
 		};
