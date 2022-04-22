@@ -4,6 +4,7 @@
 
 #include "Window.hpp"
 #include "ShaderCode.hpp"
+#include "ShaderResource.hpp"
 
 namespace rapid
 {
@@ -37,14 +38,18 @@ namespace rapid
 		 */
 		void terminate() override;
 
+		/**
+		 * Create a new shader resource.
+		 */
+		ShaderResource& createShaderResource();
+
 	private:
 		/**
 		 * Setup descriptors.
 		 *
 		 * @param bindings The layout bindings.
-		 * @param poolSizes The descriptor pool sizes.
 		 */
-		void setupDescriptors(std::vector<VkDescriptorSetLayoutBinding>&& bindings, std::vector<VkDescriptorPoolSize>&& poolSizes);
+		void setupDescriptors(std::vector<VkDescriptorSetLayoutBinding>&& bindings);
 
 		/**
 		 * Create the pipeline layout.
@@ -71,6 +76,8 @@ namespace rapid
 	private:
 		std::filesystem::path m_CacheFile;
 		std::vector<ShaderCode> m_ShaderCode = {};	// This is not the best move, but we need it for pipeline re-creation.
+		std::vector<VkDescriptorPoolSize> m_DescriptorPoolSizes = {};
+		std::vector<ShaderResource> m_ShaderResources = {};
 
 		GraphicsEngine& m_Engine;
 		Window& m_Window;

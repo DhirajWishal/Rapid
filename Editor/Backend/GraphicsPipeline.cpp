@@ -91,9 +91,7 @@ namespace rapid
 		std::unordered_map<std::string, ShaderBinding> bindings(vertex.m_Bindings.begin(), vertex.m_Bindings.end());
 		bindings.insert(fragment.m_Bindings.begin(), fragment.m_Bindings.end());
 
-		std::vector<VkDescriptorPoolSize> poolSizes;
-		poolSizes.reserve(bindings.size());
-
+		m_DescriptorPoolSizes.reserve(bindings.size());
 		for (const auto& [name, binding] : bindings)
 		{
 			VkDescriptorPoolSize vPoolSize = {
@@ -101,11 +99,11 @@ namespace rapid
 				.descriptorCount = binding.m_Count
 			};
 
-			poolSizes.emplace_back(vPoolSize);
+			m_DescriptorPoolSizes.emplace_back(vPoolSize);
 		}
 
 		// Now we can setup the descriptors.
-		setupDescriptors(std::move(layoutBindings), std::move(poolSizes));
+		setupDescriptors(std::move(layoutBindings));
 
 		// Resolve push constants and create the layout.
 		std::vector<VkPushConstantRange> pushConstants(vertex.m_PushConstants.begin(), vertex.m_PushConstants.end());
@@ -130,11 +128,55 @@ namespace rapid
 		m_Engine.getDeviceTable().vkDestroyPipelineCache(m_Engine.getLogicalDevice(), m_PipelineCache, nullptr);
 		m_Engine.getDeviceTable().vkDestroyPipelineLayout(m_Engine.getLogicalDevice(), m_PipelineLayout, nullptr);
 		m_Engine.getDeviceTable().vkDestroyDescriptorSetLayout(m_Engine.getLogicalDevice(), m_DescriptorSetLayout, nullptr);
+		m_Engine.getDeviceTable().vkDestroyDescriptorPool(m_Engine.getLogicalDevice(), m_DescriptorPool, nullptr);
 
 		m_IsTerminated = true;
 	}
 
-	void GraphicsPipeline::setupDescriptors(std::vector<VkDescriptorSetLayoutBinding>&& bindings, std::vector<VkDescriptorPoolSize>&& poolSizes)
+	ShaderResource& GraphicsPipeline::createShaderResource()
+	{
+		// First, let's create a new descriptor pool.
+		VkDescriptorPoolCreateInfo poolCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.maxSets = static_cast<uint32_t>(m_ShaderResources.size()) + 1,
+			.poolSizeCount = static_cast<uint32_t>(m_DescriptorPoolSizes.size()),
+			.pPoolSizes = m_DescriptorPoolSizes.data()
+		};
+
+		VkDescriptorPool vDescriptorPool = VK_NULL_HANDLE;
+		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateDescriptorPool(m_Engine.getLogicalDevice(), &poolCreateInfo, nullptr, &vDescriptorPool), "Failed to create the descriptor pool!");
+
+		// Allocate the new descriptor sets.
+		VkDescriptorSetAllocateInfo allocateInfo = {
+			.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.pNext = nullptr,
+			.descriptorPool = vDescriptorPool,
+			.descriptorSetCount = 1,
+			.pSetLayouts = &m_DescriptorSetLayout
+		};
+
+		// Now for every resource, we create the new descriptor set and update it.
+		for (auto& resource : m_ShaderResources)
+		{
+			VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
+			utility::ValidateResult(m_Engine.getDeviceTable().vkAllocateDescriptorSets(m_Engine.getLogicalDevice(), &allocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+
+			resource.update(vDescriptorSet);
+		}
+
+		// Destroy the old pool and assign the new one.
+		m_Engine.getDeviceTable().vkDestroyDescriptorPool(m_Engine.getLogicalDevice(), m_DescriptorPool, nullptr);
+		m_DescriptorPool = vDescriptorPool;
+
+		// Finally, lets create the new descriptor set, assign it to the resource and return its reference.
+		VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
+		utility::ValidateResult(m_Engine.getDeviceTable().vkAllocateDescriptorSets(m_Engine.getLogicalDevice(), &allocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+		return m_ShaderResources.emplace_back(m_Engine, m_DescriptorSetLayout, vDescriptorSet);
+	}
+
+	void GraphicsPipeline::setupDescriptors(std::vector<VkDescriptorSetLayoutBinding>&& bindings)
 	{
 		// Create the descriptor set layout.
 		VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
@@ -232,7 +274,10 @@ namespace rapid
 		shaderStageCreateInfos.reserve(m_ShaderCode.size());
 
 		std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
-		VkVertexInputBindingDescription bindingDescriptions = {};
+		VkVertexInputBindingDescription bindingDescription = {
+			.binding = 0,
+			.inputRate = VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX
+		};
 
 		VkPipelineShaderStageCreateInfo shaderStageCreateInfo = {
 			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -256,9 +301,10 @@ namespace rapid
 				const auto& inputs = shader.m_InputAttributes;
 				attributeDescriptions.reserve(inputs.size());
 
-				VkVertexInputAttributeDescription attributeDescription = {};
-				attributeDescription.binding = 0;
-				attributeDescription.offset = 0;
+				VkVertexInputAttributeDescription attributeDescription = {
+					.binding = 0,
+					.offset = 0
+				};
 
 				// Resolve the individual attributes.
 				for (const auto& attribute : inputs)
@@ -270,9 +316,7 @@ namespace rapid
 					attributeDescription.offset += attribute.m_Size;
 				}
 
-				bindingDescriptions.binding = 0;
-				bindingDescriptions.inputRate = VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX;
-				bindingDescriptions.stride = attributeDescription.offset;
+				bindingDescription.stride = attributeDescription.offset;
 			}
 		}
 
@@ -282,7 +326,7 @@ namespace rapid
 			.pNext = nullptr,
 			.flags = 0,
 			.vertexBindingDescriptionCount = 1,
-			.pVertexBindingDescriptions = &bindingDescriptions,
+			.pVertexBindingDescriptions = &bindingDescription,
 			.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
 			.pVertexAttributeDescriptions = attributeDescriptions.data()
 		};
