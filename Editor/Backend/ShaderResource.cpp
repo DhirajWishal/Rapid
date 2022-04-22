@@ -15,7 +15,7 @@ namespace rapid
 		vCopies.reserve(m_Bindings.size());
 
 		VkCopyDescriptorSet copyDescriptorSet = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET,
+			.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET,
 			.pNext = nullptr,
 			.srcSet = m_DescriptorSet,
 			.srcArrayElement = 0,

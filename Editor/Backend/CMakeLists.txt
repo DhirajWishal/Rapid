@@ -29,7 +29,9 @@ add_library(
 	ShaderCode.cpp
 	GraphicsPipeline.cpp
 	GraphicsPipeline.hpp
- "ShaderResource.hpp" "ShaderResource.cpp")
+	ShaderResource.cpp
+	ShaderResource.hpp
+)
 
 # Set the include directory.
 target_include_directories(

@@ -102,8 +102,8 @@ namespace rapid
 			m_DescriptorPoolSizes.emplace_back(vPoolSize);
 		}
 
-		// Now we can setup the descriptors.
-		setupDescriptors(std::move(layoutBindings));
+		// Now we can setup the descriptor set layout.
+		setupDescriptorSetLayout(std::move(layoutBindings));
 
 		// Resolve push constants and create the layout.
 		std::vector<VkPushConstantRange> pushConstants(vertex.m_PushConstants.begin(), vertex.m_PushConstants.end());
@@ -150,7 +150,7 @@ namespace rapid
 
 		// Allocate the new descriptor sets.
 		VkDescriptorSetAllocateInfo allocateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.pNext = nullptr,
 			.descriptorPool = vDescriptorPool,
 			.descriptorSetCount = 1,
@@ -176,7 +176,7 @@ namespace rapid
 		return m_ShaderResources.emplace_back(m_Engine, m_DescriptorSetLayout, vDescriptorSet);
 	}
 
-	void GraphicsPipeline::setupDescriptors(std::vector<VkDescriptorSetLayoutBinding>&& bindings)
+	void GraphicsPipeline::setupDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding>&& bindings)
 	{
 		// Create the descriptor set layout.
 		VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
@@ -230,7 +230,7 @@ namespace rapid
 
 		// Create the pipeline cache.
 		VkPipelineCacheCreateInfo createInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
 			.pNext = VK_NULL_HANDLE,
 			.flags = 0,
 			.initialDataSize = size,
@@ -276,11 +276,11 @@ namespace rapid
 		std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 		VkVertexInputBindingDescription bindingDescription = {
 			.binding = 0,
-			.inputRate = VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX
+			.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
 		};
 
 		VkPipelineShaderStageCreateInfo shaderStageCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.pName = "main",
@@ -322,7 +322,7 @@ namespace rapid
 
 		// Setup vertex input state.
 		VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.vertexBindingDescriptionCount = 1,
@@ -333,16 +333,16 @@ namespace rapid
 
 		// Setup input assembly state.
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
-			.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 			.primitiveRestartEnable = VK_FALSE
 		};
 
 		// Setup tessellation state.
 		VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.patchControlPoints = 0
@@ -364,7 +364,7 @@ namespace rapid
 		};
 
 		VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.viewportCount = 1,
@@ -376,25 +376,21 @@ namespace rapid
 		// Setup color blend state.
 		VkPipelineColorBlendAttachmentState colorBlendAttachmentState = {
 			.blendEnable = VK_FALSE,
-			.srcColorBlendFactor = VkBlendFactor::VK_BLEND_FACTOR_ZERO,
-			.dstColorBlendFactor = VkBlendFactor::VK_BLEND_FACTOR_ZERO,
-			.colorBlendOp = VkBlendOp::VK_BLEND_OP_ADD,
-			.srcAlphaBlendFactor = VkBlendFactor::VK_BLEND_FACTOR_ZERO,
-			.dstAlphaBlendFactor = VkBlendFactor::VK_BLEND_FACTOR_ZERO,
-			.alphaBlendOp = VkBlendOp::VK_BLEND_OP_ADD,
-			.colorWriteMask =
-				VkColorComponentFlagBits::VK_COLOR_COMPONENT_R_BIT |
-				VkColorComponentFlagBits::VK_COLOR_COMPONENT_G_BIT |
-				VkColorComponentFlagBits::VK_COLOR_COMPONENT_B_BIT |
-				VkColorComponentFlagBits::VK_COLOR_COMPONENT_A_BIT
+			.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+			.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+			.colorBlendOp = VK_BLEND_OP_ADD,
+			.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+			.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+			.alphaBlendOp = VK_BLEND_OP_ADD,
+			.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
 		};
 
 		VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.logicOpEnable = VK_FALSE,
-			.logicOp = VkLogicOp::VK_LOGIC_OP_CLEAR,
+			.logicOp = VK_LOGIC_OP_CLEAR,
 			.attachmentCount = 1,
 			.pAttachments = &colorBlendAttachmentState,
 			.blendConstants = { 0.0, 0.0, 0.0, 0.0 }
@@ -402,7 +398,7 @@ namespace rapid
 
 		// Setup rasterization state.
 		VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.depthClampEnable = VK_FALSE,
@@ -419,10 +415,10 @@ namespace rapid
 
 		// Setup multisample state.
 		VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
-			.rasterizationSamples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT,
+			.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
 			.sampleShadingEnable = VK_TRUE,
 			.minSampleShading = 1.0f,
 			.alphaToCoverageEnable = VK_FALSE,
@@ -432,27 +428,27 @@ namespace rapid
 
 		// Setup depth stencil state.
 		VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.depthTestEnable = VK_TRUE,
 			.depthWriteEnable = VK_TRUE,
-			.depthCompareOp = VkCompareOp::VK_COMPARE_OP_LESS_OR_EQUAL,
+			.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
 			.front = {
-				.compareOp = VkCompareOp::VK_COMPARE_OP_NEVER,
+				.compareOp = VK_COMPARE_OP_NEVER,
 			},
 			.back = {
-				.compareOp = VkCompareOp::VK_COMPARE_OP_ALWAYS,
+				.compareOp = VK_COMPARE_OP_ALWAYS,
 			}
 		};
 
 		// Setup dynamic state.
 		std::array<VkDynamicState, 2> dynamicStates;
-		dynamicStates[0] = VkDynamicState::VK_DYNAMIC_STATE_SCISSOR;
-		dynamicStates[1] = VkDynamicState::VK_DYNAMIC_STATE_VIEWPORT;
+		dynamicStates[0] = VK_DYNAMIC_STATE_SCISSOR;
+		dynamicStates[1] = VK_DYNAMIC_STATE_VIEWPORT;
 
 		VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
@@ -461,7 +457,7 @@ namespace rapid
 
 		// Setup pipeline create info.
 		VkGraphicsPipelineCreateInfo pipeineCreateInfo = {
-			.sType = VkStructureType::VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
 			.stageCount = static_cast<uint32_t>(shaderStageCreateInfos.size()),

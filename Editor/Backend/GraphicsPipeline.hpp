@@ -45,11 +45,11 @@ namespace rapid
 
 	private:
 		/**
-		 * Setup descriptors.
+		 * Setup the descriptor set layout.
 		 *
 		 * @param bindings The layout bindings.
 		 */
-		void setupDescriptors(std::vector<VkDescriptorSetLayoutBinding>&& bindings);
+		void setupDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding>&& bindings);
 
 		/**
 		 * Create the pipeline layout.
