@@ -133,6 +133,12 @@ namespace rapid
 		m_IsTerminated = true;
 	}
 
+	void GraphicsPipeline::recreate()
+	{
+		m_Engine.getDeviceTable().vkDestroyPipeline(m_Engine.getLogicalDevice(), m_Pipeline, nullptr);
+		createPipeline();
+	}
+
 	ShaderResource& GraphicsPipeline::createShaderResource()
 	{
 		// First, let's create a new descriptor pool.

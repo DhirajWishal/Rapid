@@ -10,7 +10,9 @@
 namespace rapid
 {
 	Window::Window(GraphicsEngine& engine, std::string_view title)
-		: m_Engine(engine), m_pWindow(SDL_CreateWindow(title.data(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOWEVENT_MAXIMIZED))
+		: m_Engine(engine)
+		, m_pWindow(SDL_CreateWindow(title.data(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOWEVENT_MAXIMIZED))
+		, m_Extent{ 1280, 720 }
 	{
 		// Check if the window creation was successful.
 		if (!m_pWindow)
@@ -69,14 +71,14 @@ namespace rapid
 		m_IsTerminated = true;
 	}
 
-	void Window::pollEvents()
+	bool Window::pollEvents()
 	{
 		SDL_Event sdlEvent = {};
 		const auto isAvailable = SDL_PollEvent(&sdlEvent);
 
-		// Close the application. This is a naive way of doing it and will be replaced later.
+		// Close the application.
 		if (sdlEvent.type == SDL_QUIT)
-			std::exit(0);
+			return false;
 
 		// Transmit the data to the nodes.
 		for (auto& pNode : m_ProcessingNodes)
@@ -86,10 +88,14 @@ namespace rapid
 		const auto result = m_Engine.getDeviceTable().vkAcquireNextImageKHR(m_Engine.getLogicalDevice(), m_Swapchain, std::numeric_limits<uint64_t>::max(), m_InFlightSemaphores[m_FrameIndex], VK_NULL_HANDLE, &m_ImageIndex);
 		if (result == VkResult::VK_ERROR_OUT_OF_DATE_KHR || result == VkResult::VK_SUBOPTIMAL_KHR)
 		{
-			// Recreate.
+			recreate();
+			return pollEvents();
 		}
+
 		else
 			utility::ValidateResult(result, "Failed to acquire the next swap chain image!");
+
+		return true;
 	}
 
 	void Window::submitFrame()
@@ -118,19 +124,11 @@ namespace rapid
 		// Submit the commands.
 		commandBuffer.submit(m_RenderFinishedSemaphores[m_FrameIndex], m_InFlightSemaphores[m_FrameIndex], true);	// Remove the true here later.
 
-		// We can now present it.
-		present();
-
 		// Finally, increment the frame index.
 		m_FrameIndex = ++m_FrameIndex % m_FrameCount;
-	}
 
-	VkExtent2D Window::extent() const
-	{
-		int32_t width = 0, height = 0;
-		SDL_GetWindowSize(m_pWindow, &width, &height);
-
-		return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+		// We can now present it.
+		present();
 	}
 
 	uint32_t Window::getBestBufferCount() const
@@ -281,7 +279,7 @@ namespace rapid
 			.compositeAlpha = surfaceComposite,
 			.presentMode = presentMode,
 			.clipped = VK_TRUE,
-			.oldSwapchain = m_Swapchain,
+			.oldSwapchain = VK_NULL_HANDLE,
 		};
 
 		// Resolve the queue families if the two queues are different.
@@ -297,15 +295,7 @@ namespace rapid
 			swapchainCreateInfo.pQueueFamilyIndices = queueFamilyindices;
 		}
 
-		VkSwapchainKHR vNewSwapChain = VK_NULL_HANDLE;
-		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateSwapchainKHR(m_Engine.getLogicalDevice(), &swapchainCreateInfo, nullptr, &vNewSwapChain), "Failed to create the swapchain!");
-
-		// Destroy the old swapchain if we had it.
-		if (m_Swapchain != VK_NULL_HANDLE)
-			clearSwapchain();
-
-		// Assign the new swapchain.
-		m_Swapchain = vNewSwapChain;
+		utility::ValidateResult(m_Engine.getDeviceTable().vkCreateSwapchainKHR(m_Engine.getLogicalDevice(), &swapchainCreateInfo, nullptr, &m_Swapchain), "Failed to create the swapchain!");
 
 		// Get the image views.
 		m_SwapchainImages.resize(swapchainCreateInfo.minImageCount);
@@ -444,10 +434,59 @@ namespace rapid
 
 		const auto result = m_Engine.getDeviceTable().vkQueuePresentKHR(m_Engine.getQueue().getTransferQueue(), &presentInfo);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-		{
-			// Recreate.
-		}
+			recreate();
+
 		else
 			utility::ValidateResult(result, "Failed to present the swapchain image!");
+	}
+
+	void Window::recreate()
+	{
+		// Wait till we finish whatever we are running.
+		m_Engine.waitIdle();
+
+		// Get the new extent.
+		int32_t width = 0, height = 0;
+		SDL_GetWindowSize(m_pWindow, &width, &height);
+
+		m_Extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+
+		// Destroy the previous stuff.
+		m_Engine.getDeviceTable().vkDestroyRenderPass(m_Engine.getLogicalDevice(), m_RenderPass, nullptr);
+
+		for (uint32_t i = 0; i < m_FrameCount; i++)
+		{
+			m_Engine.getDeviceTable().vkDestroyFramebuffer(m_Engine.getLogicalDevice(), m_Framebuffers[i], nullptr);
+			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), m_RenderFinishedSemaphores[i], nullptr);
+			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), m_InFlightSemaphores[i], nullptr);
+		}
+
+		m_RenderFinishedSemaphores.clear();
+		m_InFlightSemaphores.clear();
+
+		// Make sure to destroy the old surface!
+		clearSwapchain();
+		vkDestroySurfaceKHR(m_Engine.getInstance(), m_Surface, nullptr);
+
+		// Create the surface.
+		if (!SDL_Vulkan_CreateSurface(m_pWindow, m_Engine.getInstance(), &m_Surface))
+		{
+			spdlog::error("Failed to create the window surface! Error message: {}", SDL_GetError());
+			return;
+		}
+
+		// Now we can redo it.
+		createSwapchain();
+		createRenderPass();
+		createFramebuffers();
+		createSyncObjects();
+
+		// Now we just have to update the pipelines.
+		for (auto& pNode : m_ProcessingNodes)
+			pNode->onWindowResize();
+
+		// Reset the indexes.
+		m_FrameIndex = 0;
+		m_ImageIndex = 0;
 	}
 }

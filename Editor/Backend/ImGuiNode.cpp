@@ -168,6 +168,9 @@ namespace rapid
 				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, true);
 			else
 				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, false);
+
+			// Set the scroll event.
+			imGuiIO.AddMouseWheelEvent(events.wheel.preciseX, events.wheel.preciseY);
 		}
 	}
 
@@ -179,14 +182,14 @@ namespace rapid
 		// Update the buffers.
 		updateBuffers();
 
-		ImGuiIO& io = ImGui::GetIO();
+		ImGuiIO& imGuiIO = ImGui::GetIO();
 		ImDrawData* pDrawData = ImGui::GetDrawData();
 
 		if (!pDrawData)
 			return;
 
 		// Update and Render additional Platform Windows
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		if (imGuiIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 #ifdef RAPID_PLATFORM_WINDOWS
 			ImGui::UpdatePlatformWindows();
@@ -202,15 +205,15 @@ namespace rapid
 			vec2 m_Translate = ToVec2(1.0f);
 		} pushConstants;
 
-		pushConstants.m_Scale = ToVec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+		pushConstants.m_Scale = ToVec2(2.0f / imGuiIO.DisplaySize.x, 2.0f / imGuiIO.DisplaySize.y);
 		pushConstants.m_Translate = ToVec2(-1.0f);
 
 		// Set the viewport.
 		const VkViewport viewport = {
 			.x = 0.0f,
 			.y = 0.0f,
-			.width = io.DisplaySize.x,
-			.height = io.DisplaySize.y,
+			.width = imGuiIO.DisplaySize.x,
+			.height = imGuiIO.DisplaySize.y,
 			.minDepth = 0.0f,
 			.maxDepth = 1.0f
 		};
@@ -260,6 +263,17 @@ namespace rapid
 		}
 	}
 
+	void ImGuiNode::onWindowResize()
+	{
+		m_Pipeline->recreate();
+
+		// Set the new window size.
+		const auto extent = m_Window.extent();
+		ImGuiIO& imGuiIO = ImGui::GetIO();
+		imGuiIO.DisplaySize.x = static_cast<float>(extent.width);
+		imGuiIO.DisplaySize.y = static_cast<float>(extent.height);
+	}
+
 	void ImGuiNode::updateBuffers()
 	{
 		ImDrawData* pDrawData = ImGui::GetDrawData();
@@ -280,13 +294,13 @@ namespace rapid
 		if (currentVertexCount < pDrawData->TotalVtxCount || pDrawData->TotalVtxCount < (currentVertexCount - ElementCount))
 		{
 			m_VertexBuffer->terminate();
-			m_VertexBuffer = std::make_unique<Buffer>(m_Engine, vertexSize, BufferType::ShallowVertex);
+			m_VertexBuffer = std::make_unique<Buffer>(m_Engine, GetNewVertexBufferSize(vertexSize), BufferType::ShallowVertex);
 		}
 
 		if (currentIndexCount < pDrawData->TotalIdxCount || pDrawData->TotalIdxCount < (currentIndexCount - ElementCount))
 		{
 			m_IndexBuffer->terminate();
-			m_IndexBuffer = std::make_unique<Buffer>(m_Engine, vertexSize, BufferType::ShallowVertex);
+			m_IndexBuffer = std::make_unique<Buffer>(m_Engine, GetNewIndexBufferSize(indexSize), BufferType::ShallowIndex);
 		}
 
 		// Copy the content.

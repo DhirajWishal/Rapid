@@ -48,6 +48,11 @@ namespace rapid
 		 */
 		void bind(CommandBuffer commandBuffer, uint32_t frameIndex) override;
 
+		/**
+		 * This method will get called when the window is resized.
+		 */
+		void onWindowResize() override;
+
 	private:
 		/**
 		 * Update the buffers.

@@ -43,6 +43,11 @@ namespace rapid
 		 */
 		virtual void bind(CommandBuffer commandBuffer, uint32_t frameIndex) = 0;
 
+		/**
+		 * This method will get called when the window is resized.
+		 */
+		virtual void onWindowResize() = 0;
+
 	protected:
 		GraphicsEngine& m_Engine;
 		Window& m_Window;

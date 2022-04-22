@@ -57,6 +57,11 @@ namespace rapid
 		void executeRecordedCommands(bool shouldWait = true);
 
 		/**
+		 * Wait idle till all the existing commands are done.
+		 */
+		void waitIdle() const;
+
+		/**
 		 * Get the device table.
 		 *
 		 * @return The device table.

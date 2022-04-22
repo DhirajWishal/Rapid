@@ -17,15 +17,9 @@ int main()
 	auto window = rapid::Window(engine, "Rapid Editor");
 	window.createNode<rapid::ImGuiNode>();
 
-	uint64_t counter = 100000;
-	while (counter--)
+	while (window.pollEvents())
 	{
-		window.pollEvents();
-
-		ImGui::Begin("Something");
-		ImGui::Text("This is the first time I'm rendering text to check if everything is working fine!");
-		ImGui::End();
-
+		ImGui::ShowDemoWindow();
 		window.submitFrame();
 	}
 

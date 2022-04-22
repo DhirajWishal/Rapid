@@ -357,6 +357,11 @@ namespace rapid
 		}
 	}
 
+	void GraphicsEngine::waitIdle() const
+	{
+		m_DeviceTable.vkDeviceWaitIdle(m_LogicalDevice);
+	}
+
 	void GraphicsEngine::createInstance()
 	{
 		VkApplicationInfo applicationInfo =

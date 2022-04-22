@@ -39,6 +39,11 @@ namespace rapid
 		void terminate() override;
 
 		/**
+		 * Recreate the pipeline.
+		 */
+		void recreate();
+
+		/**
 		 * Create a new shader resource.
 		 */
 		ShaderResource& createShaderResource();

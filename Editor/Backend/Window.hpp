@@ -35,8 +35,10 @@ namespace rapid
 		/**
 		 * Poll the events.
 		 * This needs to be called as the first function in every iteration.
+		 *
+		 * @return true if the window is active.
 		 */
-		void pollEvents();
+		bool pollEvents();
 
 		/**
 		 * Submit the frame to the GPU.
@@ -59,7 +61,7 @@ namespace rapid
 		 *
 		 * @return The extent.
 		 */
-		VkExtent2D extent() const;
+		VkExtent2D extent() const { return m_Extent; }
 
 		/**
 		 * Get the render pass.
@@ -125,17 +127,25 @@ namespace rapid
 		 */
 		void present();
 
+		/**
+		 * Recreate the swapchain and the resources.
+		 */
+		void recreate();
+
 	private:
 		std::vector<VkImage> m_SwapchainImages = {};
 		std::vector<VkImageView> m_SwapchainImageViews = {};
 		std::vector<VkFramebuffer> m_Framebuffers = {};
 		std::vector<std::unique_ptr<ProcessingNode>> m_ProcessingNodes = {};
+
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores = {};
 		std::vector<VkSemaphore> m_InFlightSemaphores = {};
 
 		std::unique_ptr<CommandBufferAllocator> m_CommandBufferAllocator = nullptr;
 
 		GraphicsEngine& m_Engine;
+
+		VkExtent2D m_Extent;
 
 		SDL_Window* m_pWindow = nullptr;
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
