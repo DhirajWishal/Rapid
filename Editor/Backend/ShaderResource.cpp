@@ -77,7 +77,7 @@ namespace rapid
 			.dstBinding = location,
 			.dstArrayElement = 0,
 			.descriptorCount = 1,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.pImageInfo = &imageInfo,
 			.pBufferInfo = nullptr,
 			.pTexelBufferView = nullptr

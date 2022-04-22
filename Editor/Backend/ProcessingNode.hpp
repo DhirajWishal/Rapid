@@ -37,8 +37,9 @@ namespace rapid
 		 * Bind the resources to the command buffer.
 		 *
 		 * @param commandBuffer The command buffer to bind to.
+		 * @param frameIndex The frame's index number.
 		 */
-		virtual void bind(CommandBuffer commandBuffer) = 0;
+		virtual void bind(CommandBuffer commandBuffer, uint32_t frameIndex) = 0;
 
 	protected:
 		GraphicsEngine& m_Engine;

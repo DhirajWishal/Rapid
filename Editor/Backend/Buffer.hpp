@@ -17,6 +17,12 @@ namespace rapid
 		// Used to store index data. Note that in order to supply data to this type, we need a staging buffer.
 		Index = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 
+		// Used to store vertex data. Note that unlike the other, this can directly receive data.
+		ShallowVertex = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+
+		// Used to store index data. Note that unlike the other, this can directly receive data.
+		ShallowIndex = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+
 		// Used to store uniform data.
 		Uniform = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 

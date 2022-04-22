@@ -28,6 +28,12 @@ namespace rapid
 			memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 			break;
 
+		case BufferType::ShallowVertex:
+		case BufferType::ShallowIndex:
+			memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+			vmaFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+			break;
+
 		case BufferType::Uniform:
 		case BufferType::Staging:
 			memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;

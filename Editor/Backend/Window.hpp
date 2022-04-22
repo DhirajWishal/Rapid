@@ -75,6 +75,13 @@ namespace rapid
 		 */
 		VkFramebuffer getCurrentFrameBuffer() const { return m_Framebuffers[m_FrameIndex]; }
 
+		/**
+		 * Get the frame count.
+		 *
+		 * @return The frame count.
+		 */
+		uint32_t frameCount() const { return m_FrameCount; }
+
 	private:
 		/**
 		 * Get the best buffer count.
@@ -108,11 +115,23 @@ namespace rapid
 		 */
 		void createFramebuffers();
 
+		/**
+		 * Create the required sync objects.
+		 */
+		void createSyncObjects();
+
+		/**
+		 * Present the images to the screen.
+		 */
+		void present();
+
 	private:
 		std::vector<VkImage> m_SwapchainImages = {};
 		std::vector<VkImageView> m_SwapchainImageViews = {};
 		std::vector<VkFramebuffer> m_Framebuffers = {};
 		std::vector<std::unique_ptr<ProcessingNode>> m_ProcessingNodes = {};
+		std::vector<VkSemaphore> m_RenderFinishedSemaphores = {};
+		std::vector<VkSemaphore> m_InFlightSemaphores = {};
 
 		std::unique_ptr<CommandBufferAllocator> m_CommandBufferAllocator = nullptr;
 
@@ -128,5 +147,6 @@ namespace rapid
 
 		uint32_t m_FrameCount = 0;
 		uint32_t m_FrameIndex = 0;
+		uint32_t m_ImageIndex = 0;
 	};
 }

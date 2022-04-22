@@ -163,7 +163,7 @@ namespace rapid
 			VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
 			utility::ValidateResult(m_Engine.getDeviceTable().vkAllocateDescriptorSets(m_Engine.getLogicalDevice(), &allocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
 
-			resource.update(vDescriptorSet);
+			resource->update(vDescriptorSet);
 		}
 
 		// Destroy the old pool and assign the new one.
@@ -173,7 +173,7 @@ namespace rapid
 		// Finally, lets create the new descriptor set, assign it to the resource and return its reference.
 		VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
 		utility::ValidateResult(m_Engine.getDeviceTable().vkAllocateDescriptorSets(m_Engine.getLogicalDevice(), &allocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
-		return m_ShaderResources.emplace_back(m_Engine, m_DescriptorSetLayout, vDescriptorSet);
+		return *m_ShaderResources.emplace_back(std::make_unique<ShaderResource>(m_Engine, m_DescriptorSetLayout, vDescriptorSet));
 	}
 
 	void GraphicsPipeline::setupDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding>&& bindings)

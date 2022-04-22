@@ -53,12 +53,12 @@ namespace rapid
 		void bindPipeline(const GraphicsPipeline& pipeline) const;
 
 		/**
-		 * Bind a graphics pipeline along with a shader resource.
+		 * Bind a shader resource.
 		 *
-		 * @param pipeline The pipeline to bind.
+		 * @param pipeline The pipeline.
 		 * @param resource The shader resource to bind.
 		 */
-		void bindPipeline(const GraphicsPipeline& pipeline, const ShaderResource& resource) const;
+		void bindShaderResource(const GraphicsPipeline& pipeline, const ShaderResource& resource) const;
 
 		/**
 		 * Bind a vertex buffer to the command buffer.
@@ -90,6 +90,16 @@ namespace rapid
 		void bindScissor(const VkRect2D scissor) const;
 
 		/**
+		 * Bind push constants to the command buffer.
+		 *
+		 * @param pipeline The pipeline to bind.
+		 * @param pDataStore The data store to bind.
+		 * @param size The size of data.
+		 * @param flags The shader flags to which the data is sent.
+		 */
+		void bindPushConstant(const GraphicsPipeline& pipeline, const void* pDataStore, uint64_t size, VkShaderStageFlags flags) const;
+
+		/**
 		 * Draw vertices to the command buffer.
 		 *
 		 * @param vertexCount The vertex count to draw.
@@ -101,14 +111,24 @@ namespace rapid
 		 * This will access the vertexes using the index buffer.
 		 *
 		 * @param indexCount The index count.
+		 * @param indexOffset The index offset.
 		 * @param vertexOffset The vertex offset of the vertex buffer to begin.
 		 */
-		void drawIndices(const uint32_t indexCount, const uint32_t vertexOffset) const;
+		void drawIndices(const uint32_t indexCount, const uint32_t indexOffset, const uint32_t vertexOffset) const;
 
 		/**
 		 * End buffer recording.
 		 */
 		void end();
+
+		/**
+		 * Submit the commands to the GPU.
+		 *
+		 * @param vRenderFinishedSemaphore The semaphore to be signaled.
+		 * @param vInFlightSemaphore The wait semaphore.
+		 * @param shouldWait Whether or not to wait till the submission finishes. Default is false.
+		 */
+		void submit(VkSemaphore& vRenderFinishedSemaphore, VkSemaphore& vInFlightSemaphore, bool shouldWait = false);
 
 		/**
 		 * Get the buffer primitive.
@@ -120,6 +140,8 @@ namespace rapid
 	private:
 		GraphicsEngine& m_Engine;
 		VkCommandBuffer m_CommandBuffer = VK_NULL_HANDLE;
+
+		//VkFence m_ReadyFence = VK_NULL_HANDLE;
 
 		bool m_IsRecording = false;
 	};

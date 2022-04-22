@@ -207,26 +207,26 @@ namespace
 		{
 			ImGuiStyle& style = ImGui::GetStyle();
 
-			const auto backgroundColor = ImVec4(CreateColor256(34), CreateColor256(40), CreateColor256(49), 1.0f);
-			style.Colors[ImGuiCol_TitleBg] = backgroundColor;
-			style.Colors[ImGuiCol_WindowBg] = backgroundColor;
-			style.Colors[ImGuiCol_MenuBarBg] = backgroundColor;
-
-			const auto mainColor = ImVec4(CreateColor256(57), CreateColor256(62), CreateColor256(70), 1.0f);
-			style.Colors[ImGuiCol_TitleBgActive] = mainColor;
-			style.Colors[ImGuiCol_Header] = mainColor;
-			style.Colors[ImGuiCol_TabActive] = mainColor;
-			style.Colors[ImGuiCol_TabUnfocusedActive] = mainColor;
-
-			const auto hoveredColor = ImVec4(CreateColor256(0), CreateColor256(173), CreateColor256(181), 1.0f);
-			style.Colors[ImGuiCol_TabHovered] = hoveredColor;
-			style.Colors[ImGuiCol_HeaderHovered] = hoveredColor;
-
-			style.ChildRounding = 6.0f;
-			style.FrameRounding = 3.0f;
-			style.PopupRounding = 3.0f;
-			style.TabRounding = 3.0f;
-			style.WindowRounding = 3.0f;
+			//const auto backgroundColor = ImVec4(CreateColor256(34), CreateColor256(40), CreateColor256(49), 1.0f);
+			//style.Colors[ImGuiCol_TitleBg] = backgroundColor;
+			//style.Colors[ImGuiCol_WindowBg] = backgroundColor;
+			//style.Colors[ImGuiCol_MenuBarBg] = backgroundColor;
+			//
+			//const auto mainColor = ImVec4(CreateColor256(57), CreateColor256(62), CreateColor256(70), 1.0f);
+			//style.Colors[ImGuiCol_TitleBgActive] = mainColor;
+			//style.Colors[ImGuiCol_Header] = mainColor;
+			//style.Colors[ImGuiCol_TabActive] = mainColor;
+			//style.Colors[ImGuiCol_TabUnfocusedActive] = mainColor;
+			//
+			//const auto hoveredColor = ImVec4(CreateColor256(0), CreateColor256(173), CreateColor256(181), 1.0f);
+			//style.Colors[ImGuiCol_TabHovered] = hoveredColor;
+			//style.Colors[ImGuiCol_HeaderHovered] = hoveredColor;
+			//
+			//style.ChildRounding = 6.0f;
+			//style.FrameRounding = 3.0f;
+			//style.PopupRounding = 3.0f;
+			//style.TabRounding = 3.0f;
+			//style.WindowRounding = 3.0f;
 
 			ImGuiIO& io = ImGui::GetIO();
 			//io.DisplaySize = ImVec2(static_cast<float>(pRenderTarget->GetExtent().mWidth), static_cast<float>(pRenderTarget->GetExtent().mHeight));

@@ -19,6 +19,9 @@ namespace rapid
 			return;
 		}
 
+		// Make sure to show the window!
+		SDL_ShowWindow(m_pWindow);
+
 		// Create the surface.
 		if (!SDL_Vulkan_CreateSurface(m_pWindow, m_Engine.getInstance(), &m_Surface))
 		{
@@ -33,6 +36,7 @@ namespace rapid
 		createSwapchain();
 		createRenderPass();
 		createFramebuffers();
+		createSyncObjects();
 
 		// Create the command buffer allocator.
 		m_CommandBufferAllocator = std::make_unique<CommandBufferAllocator>(m_Engine, m_FrameCount);
@@ -54,6 +58,12 @@ namespace rapid
 		for (auto vFrameBuffer : m_Framebuffers)
 			m_Engine.getDeviceTable().vkDestroyFramebuffer(m_Engine.getLogicalDevice(), vFrameBuffer, nullptr);
 
+		for (auto vSemaphore : m_RenderFinishedSemaphores)
+			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), vSemaphore, nullptr);
+
+		for (auto vSemaphore : m_InFlightSemaphores)
+			m_Engine.getDeviceTable().vkDestroySemaphore(m_Engine.getLogicalDevice(), vSemaphore, nullptr);
+
 		clearSwapchain();
 		vkDestroySurfaceKHR(m_Engine.getInstance(), m_Surface, nullptr);
 		m_IsTerminated = true;
@@ -66,18 +76,48 @@ namespace rapid
 
 		for (auto& pNode : m_ProcessingNodes)
 			pNode->onPollEvents();
+
+		// Acquire the next swapchain image.
+		const auto result = m_Engine.getDeviceTable().vkAcquireNextImageKHR(m_Engine.getLogicalDevice(), m_Swapchain, std::numeric_limits<uint64_t>::max(), m_InFlightSemaphores[m_FrameIndex], VK_NULL_HANDLE, &m_ImageIndex);
+		if (result == VkResult::VK_ERROR_OUT_OF_DATE_KHR || result == VkResult::VK_SUBOPTIMAL_KHR)
+		{
+			// Recreate.
+		}
+		else
+			utility::ValidateResult(result, "Failed to acquire the next swap chain image!");
 	}
 
 	void Window::submitFrame()
 	{
-		auto vCommandBuffer = m_CommandBufferAllocator->getCommandBuffer(m_FrameIndex);
+		auto commandBuffer = m_CommandBufferAllocator->getCommandBuffer(m_FrameIndex);
+		commandBuffer.begin();
+
+		// Set the clear value.
+		VkClearValue clearValue = {
+			.color = {
+				.float32 = {0.0f, 0.0f, 0.0f, 1.0f}
+			}
+		};
 
 		// Bind the render pass.
+		commandBuffer.bindWindow(*this, { clearValue });
 
+		// Bind all the nodes.
 		for (auto& pNode : m_ProcessingNodes)
-			pNode->bind(vCommandBuffer);
+			pNode->bind(commandBuffer, m_FrameIndex);
 
-		// End the render pass.
+		// End the render pass and command buffer.
+		commandBuffer.unbindWindow();
+		commandBuffer.end();
+
+		// Submit the commands.
+		commandBuffer.submit(m_RenderFinishedSemaphores[m_FrameIndex], m_InFlightSemaphores[m_FrameIndex], true);	// Remove the true here later.
+
+		// We can now present it.
+		present();
+
+		// Finally, increment the frame index.
+		m_FrameIndex = ++m_FrameIndex % m_FrameCount;
 	}
 
 	VkExtent2D Window::extent() const
@@ -228,7 +268,7 @@ namespace rapid
 			.imageColorSpace = surfaceFormat.colorSpace,
 			.imageExtent = imageExtent,
 			.imageArrayLayers = 1,
-			.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+			.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 			.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
 			.queueFamilyIndexCount = 0,
 			.pQueueFamilyIndices = nullptr,
@@ -282,7 +322,7 @@ namespace rapid
 			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 		};
 
 		// Create the subpass dependencies.
@@ -360,5 +400,49 @@ namespace rapid
 			frameBufferCreateInfo.pAttachments = &m_SwapchainImageViews[i];
 			utility::ValidateResult(m_Engine.getDeviceTable().vkCreateFramebuffer(m_Engine.getLogicalDevice(), &frameBufferCreateInfo, nullptr, &m_Framebuffers[i]), "Failed to create the frame buffer!");
 		}
+	}
+
+	void Window::createSyncObjects()
+	{
+		VkSemaphoreCreateInfo createInfo = {
+			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0
+		};
+
+		m_RenderFinishedSemaphores.reserve(m_FrameCount);
+		m_InFlightSemaphores.reserve(m_FrameCount);
+		for (uint8_t i = 0; i < m_FrameCount; i++)
+		{
+			VkSemaphore vRenderFinishedSemaphore = VK_NULL_HANDLE;
+			utility::ValidateResult(m_Engine.getDeviceTable().vkCreateSemaphore(m_Engine.getLogicalDevice(), &createInfo, nullptr, &vRenderFinishedSemaphore), "Failed to create the frame buffer!");
+			m_RenderFinishedSemaphores.emplace_back(vRenderFinishedSemaphore);
+
+			VkSemaphore vInFlightSemaphore = VK_NULL_HANDLE;
+			utility::ValidateResult(m_Engine.getDeviceTable().vkCreateSemaphore(m_Engine.getLogicalDevice(), &createInfo, nullptr, &vInFlightSemaphore), "Failed to create the frame buffer!");
+			m_InFlightSemaphores.emplace_back(vInFlightSemaphore);
+		}
+	}
+
+	void Window::present()
+	{
+		VkPresentInfoKHR presentInfo = {
+			.sType = VkStructureType::VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+			.pNext = nullptr,
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = &m_RenderFinishedSemaphores[m_ImageIndex],
+			.swapchainCount = 1,
+			.pSwapchains = &m_Swapchain,
+			.pImageIndices = &m_ImageIndex,
+			.pResults = VK_NULL_HANDLE,
+		};
+
+		const auto result = m_Engine.getDeviceTable().vkQueuePresentKHR(m_Engine.getQueue().getTransferQueue(), &presentInfo);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			// Recreate.
+		}
+		else
+			utility::ValidateResult(result, "Failed to present the swapchain image!");
 	}
 }

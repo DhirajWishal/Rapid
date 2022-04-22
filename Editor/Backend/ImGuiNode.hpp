@@ -4,6 +4,7 @@
 
 #include "ProcessingNode.hpp"
 #include "Image.hpp"
+#include "GraphicsPipeline.hpp"
 
 namespace rapid
 {
@@ -41,10 +42,23 @@ namespace rapid
 		 * Bind the resources to the command buffer.
 		 *
 		 * @param commandBuffer The command buffer to bind to.
+		 * @param frameIndex The frame's index number.
 		 */
-		void bind(CommandBuffer commandBuffer) override;
+		void bind(CommandBuffer commandBuffer, uint32_t frameIndex) override;
 
 	private:
+		/**
+		 * Update the buffers.
+		 * This will get the data from ImGui and update the vertex and index buffers.
+		 */
+		void updateBuffers();
+
+	private:
+		std::vector<ShaderResource*> m_ShaderResources = {};
+
 		std::unique_ptr<Image> m_FontImage = nullptr;
+		std::unique_ptr<GraphicsPipeline> m_Pipeline = nullptr;
+		std::unique_ptr<Buffer> m_VertexBuffer = nullptr;
+		std::unique_ptr<Buffer> m_IndexBuffer = nullptr;
 	};
 }

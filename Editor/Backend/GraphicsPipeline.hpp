@@ -91,7 +91,7 @@ namespace rapid
 		std::filesystem::path m_CacheFile;
 		std::vector<ShaderCode> m_ShaderCode = {};	// This is not the best move, but we need it for pipeline re-creation.
 		std::vector<VkDescriptorPoolSize> m_DescriptorPoolSizes = {};
-		std::vector<ShaderResource> m_ShaderResources = {};
+		std::vector<std::unique_ptr<ShaderResource>> m_ShaderResources = {};
 
 		GraphicsEngine& m_Engine;
 		Window& m_Window;
