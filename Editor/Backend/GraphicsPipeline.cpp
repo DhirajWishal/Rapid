@@ -253,7 +253,7 @@ namespace rapid
 			return;
 
 		// Load cache data.
-		uint64_t cacheSize = 0;
+		size_t cacheSize = 0;
 		utility::ValidateResult(m_Engine.getDeviceTable().vkGetPipelineCacheData(m_Engine.getLogicalDevice(), m_PipelineCache, &cacheSize, nullptr), "Failed to get the pipeline cache size!");
 
 		auto buffer = std::make_unique<uint8_t[]>(cacheSize);
