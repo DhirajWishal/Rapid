@@ -205,7 +205,7 @@ namespace
 		 */
 		void setupImGui() const
 		{
-			ImGuiStyle& style = ImGui::GetStyle();
+			auto& style = ImGui::GetStyle();
 
 			const auto backgroundColor = ImVec4(CreateColor256(34), CreateColor256(40), CreateColor256(49), 1.0f);
 			style.Colors[ImGuiCol_TitleBg] = backgroundColor;
@@ -549,8 +549,6 @@ namespace rapid
 			m_Queue.getGraphicsFamily().value()
 		};
 
-		std::vector< VkDeviceQueueCreateInfo> queueCreateInfos;
-
 		VkDeviceQueueCreateInfo queueCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 			.pNext = nullptr,
@@ -560,6 +558,7 @@ namespace rapid
 			.pQueuePriorities = &priority,
 		};
 
+		std::vector< VkDeviceQueueCreateInfo> queueCreateInfos;
 		for (const auto& family : uniqueQueueFamilies)
 		{
 			queueCreateInfo.queueFamilyIndex = family;

@@ -5,10 +5,13 @@
 #include "Backend/ShaderCode.hpp"
 #include "Backend/GraphicsPipeline.hpp"
 
+#include "Frontend/Components/FileExplorer.hpp"
+
 #include <imgui.h>
 
 #ifdef main 
-#undef main
+#	undef main
+
 #endif
 
 int main()
@@ -17,9 +20,18 @@ int main()
 	auto window = rapid::Window(engine, "Rapid Editor");
 	window.createNode<rapid::ImGuiNode>();
 
+	auto explorer = rapid::FileExplorer();
+
 	while (window.pollEvents())
 	{
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
+		ImGui::Begin("Style editor");
+		ImGui::ShowFontSelector("Fonts");
+		ImGui::End();
+
+		explorer.begin();
+		explorer.end();
+
 		window.submitFrame();
 	}
 

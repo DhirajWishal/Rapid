@@ -11,6 +11,9 @@ add_library(
 	Defaults.hpp  
 	Object.cpp 
 	Variable.hpp
+	Components/FileExplorer.cpp
+	Components/FileExplorer.hpp
+	Components/UIComponent.hpp
 )
 
 # Set the include directory.
