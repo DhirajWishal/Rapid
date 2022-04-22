@@ -74,8 +74,13 @@ namespace rapid
 		SDL_Event sdlEvent = {};
 		const auto isAvailable = SDL_PollEvent(&sdlEvent);
 
+		// Close the application. This is a naive way of doing it and will be replaced later.
+		if (sdlEvent.type == SDL_QUIT)
+			std::exit(0);
+
+		// Transmit the data to the nodes.
 		for (auto& pNode : m_ProcessingNodes)
-			pNode->onPollEvents();
+			pNode->onPollEvents(sdlEvent);
 
 		// Acquire the next swapchain image.
 		const auto result = m_Engine.getDeviceTable().vkAcquireNextImageKHR(m_Engine.getLogicalDevice(), m_Swapchain, std::numeric_limits<uint64_t>::max(), m_InFlightSemaphores[m_FrameIndex], VK_NULL_HANDLE, &m_ImageIndex);

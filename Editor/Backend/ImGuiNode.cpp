@@ -4,6 +4,7 @@
 #include "Window.hpp"
 
 #include <imgui.h>
+#include <SDL.h>
 
 #include <array>
 
@@ -113,7 +114,7 @@ namespace rapid
 		m_IsTerminated = true;
 	}
 
-	void ImGuiNode::onPollEvents()
+	void ImGuiNode::onPollEvents(SDL_Event& events)
 	{
 		ImGui::NewFrame();
 
@@ -139,6 +140,35 @@ namespace rapid
 
 		ImGui::PopStyleVar(3);
 		ImGui::DockSpace(ImGui::GetID("EditorDockSpace"), ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+
+		// Transmit events to ImGui.
+		{
+			// Setup mouse data.
+			int32_t mouseX, mouseY;
+			const auto buttonState = SDL_GetMouseState(&mouseX, &mouseY);
+
+			auto& imGuiIO = ImGui::GetIO();
+			imGuiIO.MousePos.x = static_cast<float>(mouseX);
+			imGuiIO.MousePos.y = static_cast<float>(mouseY);
+
+			// Left mouse button press.
+			if (buttonState & SDL_BUTTON_LEFT)
+				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+			else
+				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+
+			// Right mouse button press.
+			if (buttonState & SDL_BUTTON_RIGHT)
+				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Right, true);
+			else
+				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Right, false);
+
+			// Middle mouse button press.
+			if (buttonState & SDL_BUTTON_MIDDLE)
+				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, true);
+			else
+				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, false);
+		}
 	}
 
 	void ImGuiNode::bind(CommandBuffer commandBuffer, uint32_t frameIndex)

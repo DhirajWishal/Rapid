@@ -35,8 +35,10 @@ namespace rapid
 
 		/**
 		 * Update ImGUI on the new iteration.
+		 * 
+		 * @param events The events.
 		 */
-		void onPollEvents() override;
+		void onPollEvents(SDL_Event& events) override;
 
 		/**
 		 * Bind the resources to the command buffer.

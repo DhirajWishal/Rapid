@@ -30,8 +30,10 @@ namespace rapid
 
 		/**
 		 * This method will be called as soon as the new iteration starts.
+		 *
+		 * @param events The events of this iteration.
 		 */
-		virtual void onPollEvents() = 0;
+		virtual void onPollEvents(SDL_Event& events) = 0;
 
 		/**
 		 * Bind the resources to the command buffer.
