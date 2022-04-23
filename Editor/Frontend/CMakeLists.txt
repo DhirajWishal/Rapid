@@ -16,7 +16,10 @@ add_library(
 	Components/FileExplorer.hpp
 	Components/NodeEditor.cpp
 	Components/NodeEditor.hpp
-)
+	Components/CodeView.cpp
+	Components/CodeView.hpp
+	Components/MenuBar.hpp
+ "Components/MenuBar.cpp" "Components/NodeSpawner.hpp" "Components/NodeSpawner.cpp")
 
 # Set the include directory.
 target_include_directories(

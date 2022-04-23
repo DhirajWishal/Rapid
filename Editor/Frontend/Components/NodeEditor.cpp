@@ -55,7 +55,7 @@ namespace rapid
 			ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
 
 			// Set the attribute info.
-			ImNodes::BeginInputAttribute(attribute.m_AttributeID);
+			ImNodes::BeginInputAttribute(attribute.m_AttributeID, ImNodesPinShape_TriangleFilled);
 			ImGui::Text(attribute.m_AttributeName.data());
 			ImNodes::EndInputAttribute();
 
@@ -68,12 +68,12 @@ namespace rapid
 		{
 			// Make sure to push the attribute flag so we can detach the link.
 			ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
-			
+
 			// Set the attribute info.
-			ImNodes::BeginOutputAttribute(attribute.m_AttributeID);
+			ImNodes::BeginOutputAttribute(attribute.m_AttributeID, ImNodesPinShape_TriangleFilled);
 			ImGui::Text(attribute.m_AttributeName.data());
 			ImNodes::EndOutputAttribute();
-			
+
 			// Don't forget to pop the attribute flag!
 			ImNodes::PopAttributeFlag();
 		}
@@ -99,10 +99,37 @@ namespace rapid
 		ImNodes::DestroyContext();
 	}
 
+	rapid::NodeBuilder& NodeEditor::createNode(std::string_view title)
+	{
+		return m_NodeBuilders.emplace_back(title, m_NodeID++);
+	}
+
 	void NodeEditor::begin()
 	{
+		// First show all the nodes.
+		ImGui::Begin("Nodes");
+
+		// Create new node if possible.
+		static bool selected = false;
+		if (ImGui::Button("Create New") || selected)
+			selected = CreateNewNode();
+
+		for (const auto& node : m_NodeBuilders)
+		{
+			if (ImGui::Selectable(node.getTitle().data()))
+			{
+				// TODO
+			}
+		}
+		ImGui::End();
+
+		// Now we can begin the editor.
 		ImGui::Begin(m_Title.c_str());
 		ImNodes::BeginNodeEditor();
+
+		// Finally we can show the nodes.
+		for (const auto& node : m_NodeBuilders)
+			node.show();
 	}
 
 	void NodeEditor::end()
@@ -130,5 +157,24 @@ namespace rapid
 		int32_t link;
 		if (ImNodes::IsLinkDestroyed(&link))
 			m_Links.erase(m_Links.begin() + link);
+
+		// Show what the link is when hovered. TODO
+		int32_t hoveredLink;
+		if (ImNodes::IsLinkHovered(&hoveredLink))
+			ImGui::SetTooltip("Link");
+	}
+
+	bool NodeEditor::CreateNewNode()
+	{
+		ImGui::Begin("Create New Node");
+
+		if (ImGui::InputText("Node name: ", m_NewNodeNameBuffer, 256))
+		{
+			ImGui::Text("Input!");
+		}
+
+		bool isCreated = ImGui::Button("Create");
+		ImGui::End();
+		return !isCreated;
 	}
 }

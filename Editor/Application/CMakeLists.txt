@@ -5,6 +5,8 @@ add_executable(
 	RapidEditor
 
 	Main.cpp
+	Source/Application.cpp
+	Source/Application.hpp
 )
 
 # Set the include directory.

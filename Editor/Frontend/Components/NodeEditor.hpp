@@ -62,6 +62,13 @@ namespace rapid
 		 */
 		void show() const;
 
+		/**
+		 * Get the node builder's title.
+		 *
+		 * @return The title.
+		 */
+		std::string_view getTitle() const { return m_Title; }
+
 	private:
 		std::string_view m_Title;
 		const int32_t m_NodeID;
@@ -88,6 +95,14 @@ namespace rapid
 		~NodeEditor();
 
 		/**
+		 * Create a new node and return it's reference.
+		 *
+		 * @param title The node's title.
+		 * @return The node builder reference.
+		 */
+		NodeBuilder& createNode(std::string_view title);
+
+		/**
 		 * Begin the stack.
 		 */
 		void begin() override;
@@ -98,6 +113,19 @@ namespace rapid
 		void end() override;
 
 	private:
+		/**
+		 * Create a new node.
+		 * 
+		 * @return Whether or not a new node was created.
+		 */
+		bool CreateNewNode();
+
+	private:
+		char m_NewNodeNameBuffer[256] = "";
+
 		std::vector<std::pair<int32_t, int32_t>> m_Links;
+		std::vector<rapid::NodeBuilder> m_NodeBuilders;
+
+		int32_t m_NodeID = 0;
 	};
 }

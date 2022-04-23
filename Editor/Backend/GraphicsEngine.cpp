@@ -12,6 +12,7 @@
 #include <fstream>
 #include <array>
 #include <set>
+#include <filesystem>
 
 namespace
 {
@@ -229,18 +230,8 @@ namespace
 			style.WindowRounding = 3.0f;
 
 			ImGuiIO& imGuiIO = ImGui::GetIO();
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/simvoni-font/Simvoni-d9vV6.otf", 12.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/simvoni-font/Simvoni-d9vV6.otf", 8.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/simvoni-font/Simvoni-d9vV6.otf", 10.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/simvoni-font/Simvoni-d9vV6.otf", 14.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/simvoni-font/Simvoni-d9vV6.otf", 16.0f);
 
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/azonix-font/Azonix-1VB0.otf", 10.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/a-atomic-md-font/AtomicMd-OVJ4A.otf", 10.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/josefin-sans-font/JosefinSansRegular-x3LYV.ttf", 12.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/salma-alfasans-font/SalmaalfasansLight-d9MJx.otf", 12.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/swansea-font/Swansea-q3pd.ttf", 6.0f);
-			imGuiIO.Fonts->AddFontFromFileTTF("Fonts/rawengulk-font/RawengulkBold-r8o9.otf", 13.0f);
+			imGuiIO.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "Fonts" / "Manrope" / "static" / "Manrope-Regular.ttf").string().c_str(), 16.0f);
 
 			//imGuiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 			//imGuiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls

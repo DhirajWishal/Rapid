@@ -118,6 +118,10 @@ namespace rapid
 	{
 		ImGui::NewFrame();
 
+		// Resolve the time delta.
+		auto newTime = clock_type::now();
+		const auto diff = newTime - m_TimePoint;
+
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
 		ImGui::SetNextWindowPos(viewport->WorkPos);
 		ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -148,6 +152,7 @@ namespace rapid
 			const auto buttonState = SDL_GetMouseState(&mouseX, &mouseY);
 
 			auto& imGuiIO = ImGui::GetIO();
+			imGuiIO.Framerate = std::nano::den / diff.count();
 			imGuiIO.MousePos.x = static_cast<float>(mouseX);
 			imGuiIO.MousePos.y = static_cast<float>(mouseY);
 
@@ -173,8 +178,24 @@ namespace rapid
 			imGuiIO.AddMouseWheelEvent(events.wheel.preciseX, events.wheel.preciseY);
 
 			// Finally let's do the keyboard inputs.
-			resolveKeyboardInputs();
+
+			switch (events.type)
+			{
+			case SDL_KEYDOWN:
+				;
+				resolveKeyboardInputs(events.key.keysym.scancode, true);
+				break;
+
+			case SDL_KEYUP:
+				resolveKeyboardInputs(events.key.keysym.scancode, false);
+				break;
+
+			default:
+				break;
+			}
 		}
+
+		m_TimePoint = newTime;
 	}
 
 	void ImGuiNode::bind(CommandBuffer commandBuffer, uint32_t frameIndex)
@@ -324,116 +345,122 @@ namespace rapid
 		m_IndexBuffer->unmapMemory();
 	}
 
-	void ImGuiNode::resolveKeyboardInputs() const
+	void ImGuiNode::resolveKeyboardInputs(SDL_Scancode scancode, bool state) const
 	{
-		auto& imGuiIO = ImGui::GetIO();
-		const auto keyboardState = SDL_GetKeyboardState(nullptr);
+		ImGuiKey imGuiKey = 0;
+		switch (scancode)
+		{
+		case SDL_SCANCODE_RETURN:			imGuiKey = ImGuiKey_Enter; break;
+		case SDL_SCANCODE_ESCAPE:			imGuiKey = ImGuiKey_Escape; break;
+		case SDL_SCANCODE_BACKSPACE:		imGuiKey = ImGuiKey_Backspace; break;
+		case SDL_SCANCODE_TAB:				imGuiKey = ImGuiKey_Tab; break;
+		case SDL_SCANCODE_SPACE:			imGuiKey = ImGuiKey_Space; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_Enter, keyboardState[SDL_SCANCODE_RETURN] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Escape, keyboardState[SDL_SCANCODE_ESCAPE] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Backspace, keyboardState[SDL_SCANCODE_BACKSPACE] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Tab, keyboardState[SDL_SCANCODE_TAB] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Space, keyboardState[SDL_SCANCODE_SPACE] > 0);
+		case SDL_SCANCODE_A:				imGuiKey = ImGuiKey_A; break;
+		case SDL_SCANCODE_B:				imGuiKey = ImGuiKey_B; break;
+		case SDL_SCANCODE_C:				imGuiKey = ImGuiKey_C; break;
+		case SDL_SCANCODE_D:				imGuiKey = ImGuiKey_D; break;
+		case SDL_SCANCODE_E:				imGuiKey = ImGuiKey_E; break;
+		case SDL_SCANCODE_F:				imGuiKey = ImGuiKey_F; break;
+		case SDL_SCANCODE_G:				imGuiKey = ImGuiKey_G; break;
+		case SDL_SCANCODE_H:				imGuiKey = ImGuiKey_H; break;
+		case SDL_SCANCODE_I:				imGuiKey = ImGuiKey_I; break;
+		case SDL_SCANCODE_J:				imGuiKey = ImGuiKey_J; break;
+		case SDL_SCANCODE_K:				imGuiKey = ImGuiKey_K; break;
+		case SDL_SCANCODE_L:				imGuiKey = ImGuiKey_L; break;
+		case SDL_SCANCODE_M:				imGuiKey = ImGuiKey_M; break;
+		case SDL_SCANCODE_N:				imGuiKey = ImGuiKey_N; break;
+		case SDL_SCANCODE_O:				imGuiKey = ImGuiKey_O; break;
+		case SDL_SCANCODE_P:				imGuiKey = ImGuiKey_P; break;
+		case SDL_SCANCODE_Q:				imGuiKey = ImGuiKey_Q; break;
+		case SDL_SCANCODE_R:				imGuiKey = ImGuiKey_R; break;
+		case SDL_SCANCODE_S:				imGuiKey = ImGuiKey_S; break;
+		case SDL_SCANCODE_T:				imGuiKey = ImGuiKey_T; break;
+		case SDL_SCANCODE_U:				imGuiKey = ImGuiKey_U; break;
+		case SDL_SCANCODE_V:				imGuiKey = ImGuiKey_V; break;
+		case SDL_SCANCODE_W:				imGuiKey = ImGuiKey_W; break;
+		case SDL_SCANCODE_X:				imGuiKey = ImGuiKey_X; break;
+		case SDL_SCANCODE_Y:				imGuiKey = ImGuiKey_Y; break;
+		case SDL_SCANCODE_Z:				imGuiKey = ImGuiKey_Z; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_A, keyboardState[SDL_SCANCODE_A] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_B, keyboardState[SDL_SCANCODE_B] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_C, keyboardState[SDL_SCANCODE_C] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_D, keyboardState[SDL_SCANCODE_D] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_E, keyboardState[SDL_SCANCODE_E] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F, keyboardState[SDL_SCANCODE_F] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_G, keyboardState[SDL_SCANCODE_G] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_H, keyboardState[SDL_SCANCODE_H] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_I, keyboardState[SDL_SCANCODE_I] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_J, keyboardState[SDL_SCANCODE_J] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_K, keyboardState[SDL_SCANCODE_K] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_L, keyboardState[SDL_SCANCODE_L] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_M, keyboardState[SDL_SCANCODE_M] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_N, keyboardState[SDL_SCANCODE_N] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_O, keyboardState[SDL_SCANCODE_O] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_P, keyboardState[SDL_SCANCODE_P] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Q, keyboardState[SDL_SCANCODE_Q] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_R, keyboardState[SDL_SCANCODE_R] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_S, keyboardState[SDL_SCANCODE_S] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_T, keyboardState[SDL_SCANCODE_T] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_U, keyboardState[SDL_SCANCODE_U] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_V, keyboardState[SDL_SCANCODE_V] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_W, keyboardState[SDL_SCANCODE_W] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_X, keyboardState[SDL_SCANCODE_X] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Y, keyboardState[SDL_SCANCODE_Y] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Z, keyboardState[SDL_SCANCODE_Z] > 0);
+		case SDL_SCANCODE_1:				imGuiKey = ImGuiKey_1; break;
+		case SDL_SCANCODE_2:				imGuiKey = ImGuiKey_2; break;
+		case SDL_SCANCODE_3:				imGuiKey = ImGuiKey_3; break;
+		case SDL_SCANCODE_4:				imGuiKey = ImGuiKey_4; break;
+		case SDL_SCANCODE_5:				imGuiKey = ImGuiKey_5; break;
+		case SDL_SCANCODE_6:				imGuiKey = ImGuiKey_6; break;
+		case SDL_SCANCODE_7:				imGuiKey = ImGuiKey_7; break;
+		case SDL_SCANCODE_8:				imGuiKey = ImGuiKey_8; break;
+		case SDL_SCANCODE_9:				imGuiKey = ImGuiKey_9; break;
+		case SDL_SCANCODE_0:				imGuiKey = ImGuiKey_0; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_1, keyboardState[SDL_SCANCODE_1] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_2, keyboardState[SDL_SCANCODE_2] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_3, keyboardState[SDL_SCANCODE_3] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_4, keyboardState[SDL_SCANCODE_4] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_5, keyboardState[SDL_SCANCODE_5] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_6, keyboardState[SDL_SCANCODE_6] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_7, keyboardState[SDL_SCANCODE_7] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_8, keyboardState[SDL_SCANCODE_8] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_9, keyboardState[SDL_SCANCODE_9] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_0, keyboardState[SDL_SCANCODE_0] > 0);
+		case SDL_SCANCODE_MINUS:			imGuiKey = ImGuiKey_Minus; break;
+		case SDL_SCANCODE_EQUALS:			imGuiKey = ImGuiKey_Equal; break;
+		case SDL_SCANCODE_LEFTBRACKET:		imGuiKey = ImGuiKey_LeftBracket; break;
+		case SDL_SCANCODE_RIGHTBRACKET:		imGuiKey = ImGuiKey_RightBracket; break;
+		case SDL_SCANCODE_BACKSLASH:		imGuiKey = ImGuiKey_Backslash; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_Minus, keyboardState[SDL_SCANCODE_MINUS] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Equal, keyboardState[SDL_SCANCODE_EQUALS] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_LeftBracket, keyboardState[SDL_SCANCODE_LEFTBRACKET] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_RightBracket, keyboardState[SDL_SCANCODE_RIGHTBRACKET] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Backslash, keyboardState[SDL_SCANCODE_BACKSLASH] > 0);
+		case SDL_SCANCODE_SEMICOLON:		imGuiKey = ImGuiKey_Semicolon; break;
+		case SDL_SCANCODE_APOSTROPHE:		imGuiKey = ImGuiKey_Apostrophe; break;
+		case SDL_SCANCODE_GRAVE:			imGuiKey = ImGuiKey_GraveAccent; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_Semicolon, keyboardState[SDL_SCANCODE_SEMICOLON] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Apostrophe, keyboardState[SDL_SCANCODE_APOSTROPHE] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_GraveAccent, keyboardState[SDL_SCANCODE_GRAVE] > 0);
 
-		imGuiIO.AddKeyEvent(ImGuiKey_Comma, keyboardState[SDL_SCANCODE_COMMA] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Period, keyboardState[SDL_SCANCODE_PERIOD] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Slash, keyboardState[SDL_SCANCODE_SLASH] > 0);
+		case SDL_SCANCODE_COMMA:			imGuiKey = ImGuiKey_Comma; break;
+		case SDL_SCANCODE_PERIOD:			imGuiKey = ImGuiKey_Period; break;
+		case SDL_SCANCODE_SLASH:			imGuiKey = ImGuiKey_Slash; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_CapsLock, keyboardState[SDL_SCANCODE_CAPSLOCK] > 0);
+		case SDL_SCANCODE_CAPSLOCK:			imGuiKey = ImGuiKey_CapsLock; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_F1, keyboardState[SDL_SCANCODE_F1] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F2, keyboardState[SDL_SCANCODE_F2] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F3, keyboardState[SDL_SCANCODE_F3] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F4, keyboardState[SDL_SCANCODE_F4] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F5, keyboardState[SDL_SCANCODE_F5] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F6, keyboardState[SDL_SCANCODE_F6] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F7, keyboardState[SDL_SCANCODE_F7] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F8, keyboardState[SDL_SCANCODE_F8] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F9, keyboardState[SDL_SCANCODE_F9] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F10, keyboardState[SDL_SCANCODE_F10] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F11, keyboardState[SDL_SCANCODE_F11] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_F12, keyboardState[SDL_SCANCODE_F12] > 0);
+		case SDL_SCANCODE_F1:				imGuiKey = ImGuiKey_F1; break;
+		case SDL_SCANCODE_F2:				imGuiKey = ImGuiKey_F2; break;
+		case SDL_SCANCODE_F3:				imGuiKey = ImGuiKey_F3; break;
+		case SDL_SCANCODE_F4:				imGuiKey = ImGuiKey_F4; break;
+		case SDL_SCANCODE_F5:				imGuiKey = ImGuiKey_F5; break;
+		case SDL_SCANCODE_F6:				imGuiKey = ImGuiKey_F6; break;
+		case SDL_SCANCODE_F7:				imGuiKey = ImGuiKey_F7; break;
+		case SDL_SCANCODE_F8:				imGuiKey = ImGuiKey_F8; break;
+		case SDL_SCANCODE_F9:				imGuiKey = ImGuiKey_F9; break;
+		case SDL_SCANCODE_F10:				imGuiKey = ImGuiKey_F10; break;
+		case SDL_SCANCODE_F11:				imGuiKey = ImGuiKey_F11; break;
+		case SDL_SCANCODE_F12:				imGuiKey = ImGuiKey_F12; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_PrintScreen, keyboardState[SDL_SCANCODE_PRINTSCREEN] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_ScrollLock, keyboardState[SDL_SCANCODE_SCROLLLOCK] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Pause, keyboardState[SDL_SCANCODE_PAUSE] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Insert, keyboardState[SDL_SCANCODE_INSERT] > 0);
+		case SDL_SCANCODE_PRINTSCREEN:		imGuiKey = ImGuiKey_PrintScreen; break;
+		case SDL_SCANCODE_SCROLLLOCK:		imGuiKey = ImGuiKey_ScrollLock; break;
+		case SDL_SCANCODE_PAUSE:			imGuiKey = ImGuiKey_Pause; break;
+		case SDL_SCANCODE_INSERT:			imGuiKey = ImGuiKey_Insert; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_Home, keyboardState[SDL_SCANCODE_HOME] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_PageUp, keyboardState[SDL_SCANCODE_PAGEUP] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_PageDown, keyboardState[SDL_SCANCODE_DELETE] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_End, keyboardState[SDL_SCANCODE_END] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_PageDown, keyboardState[SDL_SCANCODE_PAGEDOWN] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_RightArrow, keyboardState[SDL_SCANCODE_RIGHT] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_LeftArrow, keyboardState[SDL_SCANCODE_LEFT] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_DownArrow, keyboardState[SDL_SCANCODE_DOWN] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_UpArrow, keyboardState[SDL_SCANCODE_UP] > 0);
+		case SDL_SCANCODE_HOME:				imGuiKey = ImGuiKey_Home; break;
+		case SDL_SCANCODE_PAGEUP:			imGuiKey = ImGuiKey_PageUp; break;
+		case SDL_SCANCODE_DELETE:			imGuiKey = ImGuiKey_PageDown; break;
+		case SDL_SCANCODE_END:				imGuiKey = ImGuiKey_End; break;
+		case SDL_SCANCODE_PAGEDOWN:			imGuiKey = ImGuiKey_PageDown; break;
+		case SDL_SCANCODE_RIGHT:			imGuiKey = ImGuiKey_RightArrow; break;
+		case SDL_SCANCODE_LEFT:				imGuiKey = ImGuiKey_LeftArrow; break;
+		case SDL_SCANCODE_DOWN:				imGuiKey = ImGuiKey_DownArrow; break;
+		case SDL_SCANCODE_UP:				imGuiKey = ImGuiKey_UpArrow; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_NumLock, keyboardState[SDL_SCANCODE_NUMLOCKCLEAR] > 0);
+		case SDL_SCANCODE_NUMLOCKCLEAR:		imGuiKey = ImGuiKey_NumLock; break;
 
-		imGuiIO.AddKeyEvent(ImGuiKey_KeypadDivide, keyboardState[SDL_SCANCODE_KP_DIVIDE] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_KeypadMultiply, keyboardState[SDL_SCANCODE_KP_MULTIPLY] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_KeypadSubtract, keyboardState[SDL_SCANCODE_KP_MINUS] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_KeypadAdd, keyboardState[SDL_SCANCODE_KP_PLUS] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_KeypadEnter, keyboardState[SDL_SCANCODE_KP_ENTER] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad1, keyboardState[SDL_SCANCODE_KP_1] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad2, keyboardState[SDL_SCANCODE_KP_2] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad3, keyboardState[SDL_SCANCODE_KP_3] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad4, keyboardState[SDL_SCANCODE_KP_4] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad5, keyboardState[SDL_SCANCODE_KP_5] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad6, keyboardState[SDL_SCANCODE_KP_6] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad7, keyboardState[SDL_SCANCODE_KP_7] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad8, keyboardState[SDL_SCANCODE_KP_8] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad9, keyboardState[SDL_SCANCODE_KP_9] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_Keypad0, keyboardState[SDL_SCANCODE_KP_0] > 0);
-		imGuiIO.AddKeyEvent(ImGuiKey_KeypadDecimal, keyboardState[SDL_SCANCODE_KP_PERIOD] > 0);
+		case SDL_SCANCODE_KP_DIVIDE:		imGuiKey = ImGuiKey_KeypadDivide; break;
+		case SDL_SCANCODE_KP_MULTIPLY:		imGuiKey = ImGuiKey_KeypadMultiply; break;
+		case SDL_SCANCODE_KP_MINUS:			imGuiKey = ImGuiKey_KeypadSubtract; break;
+		case SDL_SCANCODE_KP_PLUS:			imGuiKey = ImGuiKey_KeypadAdd; break;
+		case SDL_SCANCODE_KP_ENTER:			imGuiKey = ImGuiKey_KeypadEnter; break;
+		case SDL_SCANCODE_KP_1:				imGuiKey = ImGuiKey_Keypad1; break;
+		case SDL_SCANCODE_KP_2:				imGuiKey = ImGuiKey_Keypad2; break;
+		case SDL_SCANCODE_KP_3:				imGuiKey = ImGuiKey_Keypad3; break;
+		case SDL_SCANCODE_KP_4:				imGuiKey = ImGuiKey_Keypad4; break;
+		case SDL_SCANCODE_KP_5:				imGuiKey = ImGuiKey_Keypad5; break;
+		case SDL_SCANCODE_KP_6:				imGuiKey = ImGuiKey_Keypad6; break;
+		case SDL_SCANCODE_KP_7:				imGuiKey = ImGuiKey_Keypad7; break;
+		case SDL_SCANCODE_KP_8:				imGuiKey = ImGuiKey_Keypad8; break;
+		case SDL_SCANCODE_KP_9:				imGuiKey = ImGuiKey_Keypad9; break;
+		case SDL_SCANCODE_KP_0:				imGuiKey = ImGuiKey_Keypad0; break;
+		case SDL_SCANCODE_KP_PERIOD:		imGuiKey = ImGuiKey_KeypadDecimal; break;
+		default:
+			break;
+		}
+
+		ImGui::GetIO().AddKeyEvent(imGuiKey, state);
 	}
 }

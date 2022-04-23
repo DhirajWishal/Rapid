@@ -6,6 +6,8 @@
 #include "Image.hpp"
 #include "GraphicsPipeline.hpp"
 
+#include <chrono>
+
 namespace rapid
 {
 	/**
@@ -14,6 +16,9 @@ namespace rapid
 	 */
 	class ImGuiNode final : public ProcessingNode
 	{
+		using clock_type = std::chrono::high_resolution_clock;
+		using time_point = clock_type::time_point;
+
 	public:
 		/**
 		 * Explicit constructor.
@@ -62,10 +67,15 @@ namespace rapid
 
 		/**
 		 * Resolve the keyboard inputs.
+		 * 
+		 * @param scancode The scancode.
+		 * @param state The state.
 		 */
-		void resolveKeyboardInputs() const;
+		void resolveKeyboardInputs(SDL_Scancode scancode, bool state) const;
 
 	private:
+		time_point m_TimePoint;
+
 		std::vector<ShaderResource*> m_ShaderResources = {};
 
 		std::unique_ptr<Image> m_FontImage = nullptr;
