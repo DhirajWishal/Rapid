@@ -1,9 +1,12 @@
 // Copyright (c) 2022 Dhiraj Wishal
 
 #include "NodeEditor.hpp"
+#include "Console.hpp"
 
 #include <imgui.h>
 #include <imnodes.h>
+
+#include <execution>
 
 namespace
 {
@@ -15,25 +18,26 @@ namespace
 	 */
 	void MiniMapHoveredCallback(int32_t nodeID, void* pUserData)
 	{
-		ImGui::SetTooltip("This is node %d", nodeID);
+		const auto pNodes = reinterpret_cast<rapid::NodeBuilder*>(pUserData);
+		ImGui::SetTooltip("This is node %s", pNodes[nodeID].getTitle().data());
 	}
 }
 
 namespace rapid
 {
-	NodeBuilder::NodeBuilder(std::string_view title, const int32_t nodeID)
-		: m_Title(title), m_NodeID(nodeID)
+	NodeBuilder::NodeBuilder(std::string title, const int32_t nodeID, int32_t& attributeID)
+		: m_Title(std::move(title)), m_AttributeID(attributeID), m_NodeID(nodeID)
 	{
 	}
 
-	void NodeBuilder::addInputAttribute(std::string_view name, const int32_t ID)
+	void NodeBuilder::addInputAttribute(std::string name)
 	{
-		m_InputAttributes.emplace_back(name, ID);
+		m_InputAttributes.emplace_back(std::move(name), m_AttributeID++);
 	}
 
-	void NodeBuilder::addOutputAttribute(std::string_view name, const int32_t ID)
+	void NodeBuilder::addOutputAttribute(std::string name)
 	{
-		m_OutputAttributes.emplace_back(name, ID);
+		m_OutputAttributes.emplace_back(std::move(name), m_AttributeID++);
 	}
 
 	void NodeBuilder::show() const
@@ -99,9 +103,9 @@ namespace rapid
 		ImNodes::DestroyContext();
 	}
 
-	rapid::NodeBuilder& NodeEditor::createNode(std::string_view title)
+	rapid::NodeBuilder& NodeEditor::createNode(std::string title)
 	{
-		return m_NodeBuilders.emplace_back(title, m_NodeID++);
+		return m_NodeBuilders.emplace_back(title, m_NodeID++, m_NodeAttributeID);
 	}
 
 	void NodeEditor::begin()
@@ -142,7 +146,7 @@ namespace rapid
 		}
 
 		// Make sure to show the mini map before we end!
-		ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight, MiniMapHoveredCallback);
+		ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight, MiniMapHoveredCallback, m_NodeBuilders.data());
 
 		//ImNodes::PopAttributeFlag();
 		ImNodes::EndNodeEditor();
@@ -168,13 +172,69 @@ namespace rapid
 	{
 		ImGui::Begin("Create New Node");
 
-		if (ImGui::InputText("Node name: ", m_NewNodeNameBuffer, 256))
+		ImGui::InputText("Node name", m_NewNodeNameBuffer, IM_ARRAYSIZE(m_NewNodeNameBuffer));
+
+		// Get the input names.
+		ImGui::InputInt("Input count", &m_NewNodeInputCount);
+		m_NewNodeInputNames.resize(m_NewNodeInputCount);
+		for (int32_t i = 0; i < m_NewNodeInputCount; i++)
+			ImGui::InputText(("Input " + std::to_string(i)).c_str(), m_NewNodeInputNames[i].data(), m_NewNodeInputNames[i].size());
+
+		// Get the output names.
+		ImGui::InputInt("Output count", &m_NewNodeOutputCount);
+		m_NewNodeOutputNames.resize(m_NewNodeOutputCount);
+		for (int32_t i = 0; i < m_NewNodeOutputCount; i++)
+			ImGui::InputText(("Output " + std::to_string(i)).c_str(), m_NewNodeOutputNames[i].data(), m_NewNodeOutputNames[i].size());
+
+		const bool isCreated = ImGui::Button("Create"); ImGui::SameLine();
+		const bool isCanceled = ImGui::Button("Cancel"); ImGui::SameLine();
+		if (ImGui::Button("Clear")) cleanupNewNodeData();
+
+		ImGui::End();
+
+		// If canceled, let's just return false after cleaning up.
+		if (isCanceled)
 		{
-			ImGui::Text("Input!");
+			cleanupNewNodeData();
+			return false;
 		}
 
-		bool isCreated = ImGui::Button("Create");
-		ImGui::End();
-		return !isCreated;
+		// If it's created, lets create the node!
+		if (isCreated)
+		{
+			// Check if we have data, if not we can return.
+			if (!m_NewNodeNameBuffer[0])
+			{
+				GetConsole().log("Failed to create a new node! Make sure that you have data to create the node first.", Severity::Warning);
+				return true;
+			}
+
+			auto& node = createNode(m_NewNodeNameBuffer);
+
+			// Create the input attributes.
+			for (auto& name : m_NewNodeInputNames)
+				node.addInputAttribute(name.data());
+
+			// Create the output attributes.
+			for (auto& name : m_NewNodeOutputNames)
+				node.addOutputAttribute(name.data());
+
+			// Make sure to clear the values before we leave!
+			cleanupNewNodeData();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	void NodeEditor::cleanupNewNodeData()
+	{
+		m_NewNodeInputNames.clear();
+		m_NewNodeOutputNames.clear();
+		std::fill_n(std::execution::unseq, m_NewNodeNameBuffer, IM_ARRAYSIZE(m_NewNodeNameBuffer), 0);
+
+		m_NewNodeInputCount = 0;
+		m_NewNodeOutputCount = 0;
 	}
 }

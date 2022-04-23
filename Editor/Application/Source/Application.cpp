@@ -3,6 +3,7 @@
 #include "Application.hpp"
 
 #include "Backend/ImGuiNode.hpp"
+#include "Frontend/Components/Console.hpp"
 
 #include <imgui.h>
 #include <fstream>
@@ -11,29 +12,31 @@ Application::Application()
 	: m_Engine(rapid::GraphicsEngine())
 	, m_Window(rapid::Window(m_Engine, "Rapid Editor"))
 	, m_NodeEditor({})
+	, m_Limiter(60)
 {
 	// Create the node.
 	m_Window.createNode<rapid::ImGuiNode>();
 
 	// Create the nodes.
 	auto& nodeA = m_NodeEditor.createNode("Node A");
-	nodeA.addInputAttribute("something", m_NodeAttributeID++);
-	nodeA.addOutputAttribute("anything", m_NodeAttributeID++);
+	nodeA.addInputAttribute("something");
+	nodeA.addOutputAttribute("anything");
 
 	auto& nodeB = m_NodeEditor.createNode("Node B");
-	nodeB.addInputAttribute("another", m_NodeAttributeID++);
-	nodeB.addOutputAttribute("stinky", m_NodeAttributeID++);
+	nodeB.addInputAttribute("another");
+	nodeB.addOutputAttribute("stinky");
 
 	auto& nodeC = m_NodeEditor.createNode("Node C");
-	nodeC.addInputAttribute("frontend", m_NodeAttributeID++);
-	nodeC.addOutputAttribute("network", m_NodeAttributeID++);
-	nodeC.addOutputAttribute("backend", m_NodeAttributeID++);
+	nodeC.addInputAttribute("frontend");
+	nodeC.addOutputAttribute("network");
+	nodeC.addOutputAttribute("backend");
 
 	showSourceCode();
 
 	while (m_Window.pollEvents())
 	{
 		ImGui::ShowDemoWindow();
+		//m_Limiter.tick();
 
 		// Show the menu bar.
 		singleShot(m_MenuBar);
@@ -46,6 +49,9 @@ Application::Application()
 
 		// Show the node editor.
 		singleShot(m_NodeEditor);
+
+		// Show the console.
+		singleShot(rapid::GetConsole());
 
 		// Finally submit the frame.
 		m_Window.submitFrame();

@@ -153,6 +153,7 @@ namespace rapid
 
 			auto& imGuiIO = ImGui::GetIO();
 			imGuiIO.Framerate = std::nano::den / diff.count();
+			imGuiIO.DeltaTime = diff.count() / static_cast<float>(std::nano::den);
 			imGuiIO.MousePos.x = static_cast<float>(mouseX);
 			imGuiIO.MousePos.y = static_cast<float>(mouseY);
 
@@ -182,12 +183,29 @@ namespace rapid
 			switch (events.type)
 			{
 			case SDL_KEYDOWN:
-				;
 				resolveKeyboardInputs(events.key.keysym.scancode, true);
+				imGuiIO.AddKeyEvent(ImGuiKey_LeftCtrl, events.key.keysym.mod & KMOD_LCTRL);
+				imGuiIO.AddKeyEvent(ImGuiKey_LeftShift, events.key.keysym.mod & KMOD_LSHIFT);
+				imGuiIO.AddKeyEvent(ImGuiKey_LeftAlt, events.key.keysym.mod & KMOD_LALT);
+
+				imGuiIO.AddKeyEvent(ImGuiKey_RightCtrl, events.key.keysym.mod & KMOD_RCTRL);
+				imGuiIO.AddKeyEvent(ImGuiKey_RightShift, events.key.keysym.mod & KMOD_RSHIFT);
+				imGuiIO.AddKeyEvent(ImGuiKey_RightAlt, events.key.keysym.mod & KMOD_RALT);
 				break;
 
 			case SDL_KEYUP:
 				resolveKeyboardInputs(events.key.keysym.scancode, false);
+				imGuiIO.AddKeyEvent(ImGuiKey_LeftCtrl, events.key.keysym.mod & KMOD_LCTRL);
+				imGuiIO.AddKeyEvent(ImGuiKey_LeftShift, events.key.keysym.mod & KMOD_LSHIFT);
+				imGuiIO.AddKeyEvent(ImGuiKey_LeftAlt, events.key.keysym.mod & KMOD_LALT);
+
+				imGuiIO.AddKeyEvent(ImGuiKey_RightCtrl, events.key.keysym.mod & KMOD_RCTRL);
+				imGuiIO.AddKeyEvent(ImGuiKey_RightShift, events.key.keysym.mod & KMOD_RSHIFT);
+				imGuiIO.AddKeyEvent(ImGuiKey_RightAlt, events.key.keysym.mod & KMOD_RALT);
+				break;
+
+			case SDL_TEXTINPUT:
+				imGuiIO.AddInputCharactersUTF8(events.text.text);
 				break;
 
 			default:
@@ -457,8 +475,7 @@ namespace rapid
 		case SDL_SCANCODE_KP_9:				imGuiKey = ImGuiKey_Keypad9; break;
 		case SDL_SCANCODE_KP_0:				imGuiKey = ImGuiKey_Keypad0; break;
 		case SDL_SCANCODE_KP_PERIOD:		imGuiKey = ImGuiKey_KeypadDecimal; break;
-		default:
-			break;
+		default:							break;
 		}
 
 		ImGui::GetIO().AddKeyEvent(imGuiKey, state);

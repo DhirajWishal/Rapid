@@ -7,6 +7,8 @@ add_library(
 
 	UndoStack.cpp
 	UndoStack.hpp
+	Limiter.cpp
+	Limiter.hpp
 )
 
 # Set the include directory.

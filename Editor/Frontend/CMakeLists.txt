@@ -18,8 +18,13 @@ add_library(
 	Components/NodeEditor.hpp
 	Components/CodeView.cpp
 	Components/CodeView.hpp
+	Components/MenuBar.cpp
 	Components/MenuBar.hpp
- "Components/MenuBar.cpp" "Components/NodeSpawner.hpp" "Components/NodeSpawner.cpp")
+	Components/NodeSpawner.cpp
+	Components/NodeSpawner.hpp
+	Components/Console.cpp
+	Components/Console.hpp
+)
 
 # Set the include directory.
 target_include_directories(

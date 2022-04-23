@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Core/UndoStack.hpp"
+#include "Core/Limiter.hpp"
 
 #include "Backend/Window.hpp"
 
@@ -41,11 +42,10 @@ private:
 	rapid::Window m_Window;
 
 	rapid::UndoStack m_UndoStack;
+	rapid::Limiter m_Limiter;
 
 	rapid::FileExplorer m_FileExplorer;
 	rapid::NodeEditor m_NodeEditor;
 	rapid::MenuBar m_MenuBar;
 	rapid::CodeView m_CodeView;
-
-	int32_t m_NodeAttributeID = 0;
 };
