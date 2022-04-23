@@ -208,29 +208,33 @@ namespace
 		{
 			auto& style = ImGui::GetStyle();
 
-			const auto backgroundColor = ImVec4(CreateColor256(34), CreateColor256(40), CreateColor256(49), 1.0f);
-			style.Colors[ImGuiCol_TitleBg] = backgroundColor;
-			style.Colors[ImGuiCol_WindowBg] = backgroundColor;
-			style.Colors[ImGuiCol_MenuBarBg] = backgroundColor;
+			// Background - 20, 23, 27
+			// Tabs - 242, 84, 91
+			// Menus - 25, 133, 161
 
-			const auto mainColor = ImVec4(CreateColor256(57), CreateColor256(62), CreateColor256(70), 1.0f);
-			style.Colors[ImGuiCol_TitleBgActive] = mainColor;
-			style.Colors[ImGuiCol_Header] = mainColor;
-			style.Colors[ImGuiCol_TabActive] = mainColor;
-			style.Colors[ImGuiCol_TabUnfocusedActive] = mainColor;
+			style.Colors[ImGuiCol_TitleBg] = ImVec4(CreateColor256(26), CreateColor256(30), CreateColor256(35), 0.5f);
+			style.Colors[ImGuiCol_TitleBgActive] = ImVec4(CreateColor256(26), CreateColor256(30), CreateColor256(35), 0.75f);
 
-			const auto hoveredColor = ImVec4(CreateColor256(0), CreateColor256(173), CreateColor256(181), 1.0f);
-			style.Colors[ImGuiCol_TabHovered] = hoveredColor;
-			style.Colors[ImGuiCol_HeaderHovered] = hoveredColor;
+			style.Colors[ImGuiCol_WindowBg] = ImVec4(CreateColor256(26), CreateColor256(30), CreateColor256(35), 1.0f);
+			style.Colors[ImGuiCol_MenuBarBg] = ImVec4(CreateColor256(26), CreateColor256(30), CreateColor256(35), 1.0f);
+
+			style.Colors[ImGuiCol_Header] = ImVec4(CreateColor256(25), CreateColor256(133), CreateColor256(161), 0.5f);
+			style.Colors[ImGuiCol_HeaderHovered] = ImVec4(CreateColor256(25), CreateColor256(133), CreateColor256(161), 1.0f);
+
+			style.Colors[ImGuiCol_Tab] = ImVec4(CreateColor256(242), CreateColor256(84), CreateColor256(91), 0.25f);
+			style.Colors[ImGuiCol_TabActive] = ImVec4(CreateColor256(242), CreateColor256(84), CreateColor256(91), 0.75f);
+			style.Colors[ImGuiCol_TabHovered] = ImVec4(CreateColor256(242), CreateColor256(84), CreateColor256(91), 1.0f);
+			style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(CreateColor256(242), CreateColor256(84), CreateColor256(91), 0.5f);
+			style.Colors[ImGuiCol_TabUnfocused] = ImVec4(CreateColor256(242), CreateColor256(84), CreateColor256(91), 0.25f);
 
 			style.ChildRounding = 6.0f;
-			style.FrameRounding = 3.0f;
+			style.FrameRounding = 1.0f;
+			style.FramePadding.y = 2.0f;
 			style.PopupRounding = 3.0f;
-			style.TabRounding = 3.0f;
+			style.TabRounding = 1.0f;
 			style.WindowRounding = 3.0f;
 
 			ImGuiIO& imGuiIO = ImGui::GetIO();
-
 			imGuiIO.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "Fonts" / "Manrope" / "static" / "Manrope-Regular.ttf").string().c_str(), 16.0f);
 
 			//imGuiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls

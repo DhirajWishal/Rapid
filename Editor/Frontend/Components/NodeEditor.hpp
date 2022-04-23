@@ -8,6 +8,8 @@
 
 namespace rapid
 {
+	constexpr uint32_t MaximumStringLength = 256;
+
 	/**
 	 * Node builder class.
 	 * This is used to build a new node.
@@ -126,14 +128,14 @@ namespace rapid
 		void cleanupNewNodeData();
 
 	private:
-		char m_NewNodeNameBuffer[256] = "";
+		char m_NewNodeNameBuffer[MaximumStringLength] = "";
 		int32_t m_NewNodeInputCount = 0;
 		int32_t m_NewNodeOutputCount = 0;
 
 		std::vector<std::pair<int32_t, int32_t>> m_Links;
 		std::vector<NodeBuilder> m_NodeBuilders;
-		std::vector<std::array<char, 256>> m_NewNodeInputNames;
-		std::vector<std::array<char, 256>> m_NewNodeOutputNames;
+		std::vector<std::array<char, MaximumStringLength>> m_NewNodeInputNames;
+		std::vector<std::array<char, MaximumStringLength>> m_NewNodeOutputNames;
 
 		int32_t m_NodeID = 0;
 		int32_t m_NodeAttributeID = 0;

@@ -5,8 +5,6 @@
 #include <imgui.h>
 #include <ctime>
 
-static std::time_t time_now = std::time(nullptr);
-
 namespace
 {
 	/**
@@ -37,12 +35,16 @@ namespace rapid
 
 	void Console::log(std::string&& message, Severity severity)
 	{
-		m_Messages.emplace_back(std::move(message), severity);
+		char buffer[100] = {};
+		const auto rawtime = time(nullptr);
+		strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", localtime(&rawtime));
+		m_Messages.emplace_back(std::move("[" + std::string(buffer) + "] " + message), severity);
 	}
 
 	void Console::begin()
 	{
 		ImGui::Begin(m_Title.c_str());
+		if (ImGui::Button("Clear")) m_Messages.clear();
 
 		// Iterate over the messages and log them.
 		for (const auto& message : m_Messages)

@@ -6,7 +6,10 @@
 #include <imgui.h>
 #include <imnodes.h>
 
-#include <execution>
+#ifdef RAPID_PLATFORM_WINDOWS
+#	include <execution>
+
+#endif
 
 namespace
 {
@@ -171,7 +174,6 @@ namespace rapid
 	bool NodeEditor::CreateNewNode()
 	{
 		ImGui::Begin("Create New Node");
-
 		ImGui::InputText("Node name", m_NewNodeNameBuffer, IM_ARRAYSIZE(m_NewNodeNameBuffer));
 
 		// Get the input names.
@@ -186,22 +188,12 @@ namespace rapid
 		for (int32_t i = 0; i < m_NewNodeOutputCount; i++)
 			ImGui::InputText(("Output " + std::to_string(i)).c_str(), m_NewNodeOutputNames[i].data(), m_NewNodeOutputNames[i].size());
 
-		const bool isCreated = ImGui::Button("Create"); ImGui::SameLine();
-		const bool isCanceled = ImGui::Button("Cancel"); ImGui::SameLine();
-		if (ImGui::Button("Clear")) cleanupNewNodeData();
-
-		ImGui::End();
-
-		// If canceled, let's just return false after cleaning up.
-		if (isCanceled)
+		// We can try to create if the user wants to.
+		if (ImGui::Button("Create"))
 		{
-			cleanupNewNodeData();
-			return false;
-		}
+			// Stop it here because we anyway have to.
+			ImGui::End();
 
-		// If it's created, lets create the node!
-		if (isCreated)
-		{
 			// Check if we have data, if not we can return.
 			if (!m_NewNodeNameBuffer[0])
 			{
@@ -225,6 +217,20 @@ namespace rapid
 			return false;
 		}
 
+		// Cancel if the user wants to.
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::End();
+			cleanupNewNodeData();
+			return false;
+		}
+
+		// Or we can clear.
+		ImGui::SameLine();
+		if (ImGui::Button("Clear")) cleanupNewNodeData();
+
+		ImGui::End();
 		return true;
 	}
 
@@ -232,7 +238,14 @@ namespace rapid
 	{
 		m_NewNodeInputNames.clear();
 		m_NewNodeOutputNames.clear();
+
+#ifdef RAPID_PLATFORM_WINDOWS
 		std::fill_n(std::execution::unseq, m_NewNodeNameBuffer, IM_ARRAYSIZE(m_NewNodeNameBuffer), 0);
+
+#else
+		std::fill_n(m_NewNodeNameBuffer, IM_ARRAYSIZE(m_NewNodeNameBuffer), 0);
+
+#endif
 
 		m_NewNodeInputCount = 0;
 		m_NewNodeOutputCount = 0;
