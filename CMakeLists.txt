@@ -74,6 +74,8 @@ add_library(
 )
 
 set_property(TARGET spdlog PROPERTY CXX_STANDARD 20)
+target_include_directories(spdlog PUBLIC ${SPDLOG_INCLUDE_DIR})
+target_compile_definitions(spdlog PUBLIC SPDLOG_COMPILED_LIB)
 
 # Set the imgui library and add it as a target library.
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/imgui)
@@ -90,8 +92,18 @@ add_library(
 )
 
 set_property(TARGET imgui PROPERTY CXX_STANDARD 20)
-target_include_directories(spdlog PUBLIC ${SPDLOG_INCLUDE_DIR})
-target_compile_definitions(spdlog PUBLIC SPDLOG_COMPILED_LIB)
+
+# Add the imnodes library as a target and also set the include directory.
+set(IMNODES_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/imnodes)
+
+add_library(
+	imnodes 
+	STATIC 
+
+	${IMNODES_INCLUDE_DIR}/imnodes.cpp
+)
+
+target_include_directories(imnodes PUBLIC ${IMGUI_INCLUDE_DIR})
 
 # Add the sdl library as a subdirectory and set the include directory.
 add_subdirectory(ThirdParty/SDL)

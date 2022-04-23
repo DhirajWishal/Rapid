@@ -11,9 +11,11 @@ add_library(
 	Defaults.hpp  
 	Object.cpp 
 	Variable.hpp
+	Components/UIComponent.hpp
 	Components/FileExplorer.cpp
 	Components/FileExplorer.hpp
-	Components/UIComponent.hpp
+	Components/NodeEditor.cpp
+	Components/NodeEditor.hpp
 )
 
 # Set the include directory.
@@ -22,10 +24,11 @@ target_include_directories(
 	PUBLIC 
 	
 	${RAPID_EDITOR_INCLUDE_DIR}
+	${IMNODES_INCLUDE_DIR}
 )
 
 # Add the target link libraries.
-target_link_libraries(Frontend Backend)
+target_link_libraries(Frontend Backend imnodes)
 
 # Set the C++ standard as C++20.
 set_property(TARGET Frontend PROPERTY CXX_STANDARD 20)

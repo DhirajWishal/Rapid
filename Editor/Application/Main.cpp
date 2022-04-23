@@ -6,6 +6,7 @@
 #include "Backend/GraphicsPipeline.hpp"
 
 #include "Frontend/Components/FileExplorer.hpp"
+#include "Frontend/Components/NodeEditor.hpp"
 
 #include <imgui.h>
 
@@ -21,6 +22,20 @@ int main()
 	window.createNode<rapid::ImGuiNode>();
 
 	auto explorer = rapid::FileExplorer();
+	auto nodeEditor = rapid::NodeEditor();
+
+	auto nodeA = rapid::NodeBuilder("Node A", 0);
+	nodeA.addInputAttribute("something", 0);
+	nodeA.addOutputAttribute("anything", 1);
+
+	auto nodeB = rapid::NodeBuilder("Node B", 1);
+	nodeB.addInputAttribute("another", 2);
+	nodeB.addOutputAttribute("stinky", 3);
+
+	auto nodeC = rapid::NodeBuilder("Node C", 2);
+	nodeC.addInputAttribute("frontend", 4);
+	nodeC.addOutputAttribute("network", 5);
+	nodeC.addOutputAttribute("backend", 6);
 
 	while (window.pollEvents())
 	{
@@ -31,6 +46,12 @@ int main()
 
 		explorer.begin();
 		explorer.end();
+
+		nodeEditor.begin();
+		nodeA.show();
+		nodeB.show();
+		nodeC.show();
+		nodeEditor.end();
 
 		window.submitFrame();
 	}
