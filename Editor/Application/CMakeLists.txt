@@ -26,3 +26,4 @@ set_property(TARGET RapidEditor PROPERTY CXX_STANDARD 20)
 # Copy the assets to the build output's application directory.
 file(COPY Shaders DESTINATION ${CMAKE_BINARY_DIR}/Editor/Application)
 file(COPY Fonts DESTINATION ${CMAKE_BINARY_DIR}/Editor/Application)
+file(COPY Themes DESTINATION ${CMAKE_BINARY_DIR}/Editor/Application)

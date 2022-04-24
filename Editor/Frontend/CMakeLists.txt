@@ -24,6 +24,8 @@ add_library(
 	Components/NodeSpawner.hpp
 	Components/Console.cpp
 	Components/Console.hpp
+	Components/Utility/ThemeParser.cpp
+	Components/Utility/ThemeParser.hpp
 )
 
 # Set the include directory.
@@ -33,6 +35,7 @@ target_include_directories(
 	
 	${RAPID_EDITOR_INCLUDE_DIR}
 	${IMNODES_INCLUDE_DIR}
+	${RAPID_JSON_INCLUDE_DIR}
 )
 
 # Add the target link libraries.

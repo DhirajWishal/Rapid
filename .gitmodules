@@ -23,3 +23,6 @@
 [submodule "ThirdParty/imnodes"]
 	path = ThirdParty/imnodes
 	url = https://github.com/Nelarius/imnodes
+[submodule "ThirdParty/rapidjson"]
+	path = ThirdParty/rapidjson
+	url = https://github.com/Tencent/rapidjson/

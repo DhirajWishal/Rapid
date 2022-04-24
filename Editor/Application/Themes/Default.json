@@ -1,0 +1,79 @@
+{
+	"Colors": {
+		"TitleBg": [
+			26,
+			30,
+			35,
+			128
+		],
+		"TitleBgActive": [
+			26,
+			30,
+			35,
+			192
+		],
+		"WindowBg": [
+			26,
+			30,
+			35,
+			255
+		],
+		"MenuBarBg": [
+			26,
+			30,
+			35,
+			255
+		],
+		"Header": [
+			25,
+			133,
+			161,
+			128
+		],
+		"HeaderHovered": [
+			25,
+			133,
+			161,
+			255
+		],
+		"Tab": [
+			242,
+			84,
+			91,
+			64
+		],
+		"TabActive": [
+			242,
+			84,
+			91,
+			192
+		],
+		"TabHovered": [
+			242,
+			84,
+			91,
+			255
+		],
+		"TabUnfocusedActive": [
+			242,
+			84,
+			91,
+			128
+		],
+		"TabUnfocused": [
+			242,
+			84,
+			91,
+			64
+		]
+	},
+	"ChildRounding": 6,
+	"FrameRounding": 1,
+	"PopupRounding": 3,
+	"TabRounding": 1,
+	"WindowRounding": 3,
+	"Font": [
+		"Fonts/Manrope/static/Manrope-Regular.ttf",
+		16
+	]
+}

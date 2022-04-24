@@ -1,8 +1,14 @@
 // Copyright (c) 2022 Dhiraj Wishal
 
 #include "MenuBar.hpp"
+#include "Utility/ThemeParser.hpp"
 
 #include <imgui.h>
+
+#ifdef RAPID_PLATFORM_WINDOWS
+#	include <execution>
+
+#endif
 
 namespace rapid
 {
@@ -41,8 +47,43 @@ namespace rapid
 					ImGui::EndMenu();
 				}
 
+				// Show the load theme option.
+				if (ImGui::MenuItem("Themes"))
+					m_ThemeSelected = true;
+
 				ImGui::EndMenu();
 			}
+		}
+
+		// Show the theme selector if selected.
+		if (m_ThemeSelected)
+		{
+			ImGui::Begin("Theme selector");
+			ImGui::InputText("Path to .json", m_ThemePath, IM_ARRAYSIZE(m_ThemePath));
+
+			// If the user selects apply, we can load and apply the theme.
+			if (ImGui::Button("Apply"))
+			{
+				// Load the style if possible.
+				LoadStyle(m_ThemePath);
+
+				// Clear the array.
+#ifdef RAPID_PLATFORM_WINDOWS
+				std::fill_n(std::execution::unseq, m_ThemePath, IM_ARRAYSIZE(m_ThemePath), 0);
+
+#else
+				std::fill_n(m_ThemePath, IM_ARRAYSIZE(m_ThemePath), 0);
+
+#endif
+
+				m_ThemeSelected = false;
+			}
+
+			ImGui::SameLine();
+			// If the user cancels it, we can leave.
+			if (ImGui::Button("Cancel")) m_ThemeSelected = false;
+
+			ImGui::End();
 		}
 	}
 

@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -32,6 +32,6 @@ jobs:
         CXX: clang++
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Build on Windows and MacOS
-      if: matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
+    - name: Build on Windows
+      if: matrix.os == 'windows-latest'
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}

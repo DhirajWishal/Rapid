@@ -22,7 +22,7 @@ namespace
 	void MiniMapHoveredCallback(int32_t nodeID, void* pUserData)
 	{
 		const auto pNodes = reinterpret_cast<rapid::NodeBuilder*>(pUserData);
-		ImGui::SetTooltip("This is node %s", pNodes[nodeID].getTitle().data());
+		ImGui::SetTooltip(pNodes[nodeID].getTitle().data());
 	}
 }
 

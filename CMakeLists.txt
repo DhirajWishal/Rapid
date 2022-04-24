@@ -109,6 +109,9 @@ target_include_directories(imnodes PUBLIC ${IMGUI_INCLUDE_DIR})
 add_subdirectory(ThirdParty/SDL)
 set(SDL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/SDL/include)
 
+# Add the rapid json parser include directory.
+set(RAPID_JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/rapidjson/include)
+
 # Set global compile definitions.
 add_compile_definitions(
 	$<$<CONFIG:Debug>:RAPID_DEBUG>

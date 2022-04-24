@@ -29,9 +29,12 @@ namespace rapid
 		void end() override;
 
 	private:
+		char m_ThemePath[256] = "";
+
 		bool m_FileMenu = false;
 		bool m_ViewMenu = false;
 
 		bool m_FontItem = false;
+		bool m_ThemeSelected = false;
 	};
 }
