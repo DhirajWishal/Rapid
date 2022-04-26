@@ -7,10 +7,10 @@
 
 #include "Backend/Window.hpp"
 
-#include "Frontend/Components/FileExplorer.hpp"
-#include "Frontend/Components/NodeEditor.hpp"
-#include "Frontend/Components/MenuBar.hpp"
-#include "Frontend/Components/CodeView.hpp"
+#include "Frontend/FileExplorer.hpp"
+#include "Frontend/NodeEditor.hpp"
+#include "Frontend/MenuBar.hpp"
+#include "Frontend/CodeView.hpp"
 
 /**
  * Application class.

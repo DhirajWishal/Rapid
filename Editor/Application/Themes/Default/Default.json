@@ -73,7 +73,7 @@
 	"TabRounding": 1,
 	"WindowRounding": 3,
 	"Font": [
-		"Fonts/Manrope/static/Manrope-Regular.ttf",
+		"./Manrope/static/Manrope-Regular.ttf",
 		16
 	]
 }

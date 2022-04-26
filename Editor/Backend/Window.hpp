@@ -93,6 +93,11 @@ namespace rapid
 		uint32_t getBestBufferCount() const;
 
 		/**
+		 * Refresh the extent and get the current size.
+		 */
+		void refreshExtent();
+
+		/**
 		 * Clear the swapchain.
 		 */
 		void clearSwapchain();

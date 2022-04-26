@@ -6,13 +6,38 @@
 
 #include <spdlog/spdlog.h>
 #include <SDL_vulkan.h>
+#include <imgui.h>
+
+namespace
+{
+	/**
+	 * Get clipboard data.
+	 *
+	 * @param NULL
+	 * @return The text.
+	 */
+	const char* GetClipboardText(void*)
+	{
+		return SDL_GetClipboardText();
+	}
+
+	/**
+	 * Set clipboard text.
+	 * 
+	 * @param NULL
+	 * @param string The text string.
+	 */
+	void SetClipboardText(void*, const char* string)
+	{
+		SDL_SetClipboardText(string);
+	}
+}
 
 namespace rapid
 {
 	Window::Window(GraphicsEngine& engine, std::string_view title)
 		: m_Engine(engine)
-		, m_pWindow(SDL_CreateWindow(title.data(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOWEVENT_MAXIMIZED))
-		, m_Extent{ 1280, 720 }
+		, m_pWindow(SDL_CreateWindow(title.data(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED))
 	{
 		// Check if the window creation was successful.
 		if (!m_pWindow)
@@ -21,8 +46,12 @@ namespace rapid
 			return;
 		}
 
-		// Make sure to show the window!
+		// Make sure to show the window! Also hide the cursor.
 		SDL_ShowWindow(m_pWindow);
+		SDL_ShowCursor(SDL_DISABLE);
+
+		// Let's also get the current window extent.
+		refreshExtent();
 
 		// Create the surface.
 		if (!SDL_Vulkan_CreateSurface(m_pWindow, m_Engine.getInstance(), &m_Surface))
@@ -42,6 +71,11 @@ namespace rapid
 
 		// Create the command buffer allocator.
 		m_CommandBufferAllocator = std::make_unique<CommandBufferAllocator>(m_Engine, m_FrameCount);
+
+		// Now that we're here, let's also set the copy and paste functions.
+		auto& imGuiIO = ImGui::GetIO();
+		imGuiIO.SetClipboardTextFn = SetClipboardText;
+		imGuiIO.GetClipboardTextFn = GetClipboardText;
 	}
 
 	Window::~Window()
@@ -77,6 +111,8 @@ namespace rapid
 		// Close the application.
 		if (sdlEvent.type == SDL_QUIT)
 			return false;
+
+		ImGui::GetIO().MouseDrawCursor = m_pWindow == SDL_GetMouseFocus();
 
 		// Transmit the data to the nodes.
 		for (auto& pNode : m_ProcessingNodes)
@@ -139,6 +175,14 @@ namespace rapid
 			bufferCount = surfaceCapabilities.maxImageCount;
 
 		return bufferCount;
+	}
+
+	void Window::refreshExtent()
+	{
+		int32_t width = 0, height = 0;
+		SDL_GetWindowSize(m_pWindow, &width, &height);
+
+		m_Extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 	}
 
 	void Window::clearSwapchain()
@@ -442,10 +486,7 @@ namespace rapid
 		m_Engine.waitIdle();
 
 		// Get the new extent.
-		int32_t width = 0, height = 0;
-		SDL_GetWindowSize(m_pWindow, &width, &height);
-
-		m_Extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+		refreshExtent();
 
 		// Destroy the previous stuff.
 		m_Engine.getDeviceTable().vkDestroyRenderPass(m_Engine.getLogicalDevice(), m_RenderPass, nullptr);

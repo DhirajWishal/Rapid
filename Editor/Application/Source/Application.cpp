@@ -3,7 +3,7 @@
 #include "Application.hpp"
 
 #include "Backend/ImGuiNode.hpp"
-#include "Frontend/Components/Console.hpp"
+#include "Frontend/Console.hpp"
 
 #include <imgui.h>
 #include <fstream>
@@ -16,20 +16,6 @@ Application::Application()
 {
 	// Create the node.
 	m_Window.createNode<rapid::ImGuiNode>();
-
-	// Create the nodes.
-	auto& nodeA = m_NodeEditor.createNode("Node A");
-	nodeA.addInputAttribute("something");
-	nodeA.addOutputAttribute("anything");
-
-	auto& nodeB = m_NodeEditor.createNode("Node B");
-	nodeB.addInputAttribute("another");
-	nodeB.addOutputAttribute("stinky");
-
-	auto& nodeC = m_NodeEditor.createNode("Node C");
-	nodeC.addInputAttribute("frontend");
-	nodeC.addOutputAttribute("network");
-	nodeC.addOutputAttribute("backend");
 
 	showSourceCode();
 

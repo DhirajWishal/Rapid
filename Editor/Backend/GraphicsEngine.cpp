@@ -229,18 +229,21 @@ namespace
 
 			style.ChildRounding = 6.0f;
 			style.FrameRounding = 1.0f;
+			style.FramePadding.x = 5.0f;
 			style.FramePadding.y = 2.0f;
 			style.PopupRounding = 3.0f;
 			style.TabRounding = 1.0f;
 			style.WindowRounding = 3.0f;
+			//style.WindowPadding.x = 5.0f;
 
 			ImGuiIO& imGuiIO = ImGui::GetIO();
 			imGuiIO.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "Fonts" / "Manrope" / "static" / "Manrope-Regular.ttf").string().c_str(), 16.0f);
 
-			//imGuiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 			//imGuiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+			imGuiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;		 // Enable Keyboard Controls
 			imGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 			imGuiIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+			imGuiIO.MouseDrawCursor = true;
 		}
 	};
 }

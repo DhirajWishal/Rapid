@@ -5,28 +5,29 @@ add_library(
 	Frontend
 	STATIC
 	
-	Function.cpp
-	Function.hpp
-	Object.hpp 
-	Defaults.hpp  
-	Object.cpp 
-	Variable.hpp
-	Components/UIComponent.hpp
-	Components/FileExplorer.cpp
-	Components/FileExplorer.hpp
-	Components/NodeEditor.cpp
-	Components/NodeEditor.hpp
-	Components/CodeView.cpp
-	Components/CodeView.hpp
-	Components/MenuBar.cpp
-	Components/MenuBar.hpp
-	Components/NodeSpawner.cpp
-	Components/NodeSpawner.hpp
-	Components/Console.cpp
-	Components/Console.hpp
-	Components/Utility/ThemeParser.cpp
-	Components/Utility/ThemeParser.hpp
-)
+	Components/Function.cpp
+	Components/Function.hpp
+	Components/Object.hpp 
+	Components/Defaults.hpp  
+	Components/Object.cpp 
+	Components/Variable.hpp
+	UIComponent.hpp
+	FileExplorer.cpp
+	FileExplorer.hpp
+	NodeEditor.cpp
+	NodeEditor.hpp
+	CodeView.cpp
+	CodeView.hpp
+	MenuBar.cpp
+	MenuBar.hpp
+	NodeSpawner.cpp
+	NodeSpawner.hpp
+	Console.cpp
+	Console.hpp
+	Utility/ThemeParser.cpp
+	Utility/ThemeParser.hpp
+	Utility/CloseEvent.hpp
+ )
 
 # Set the include directory.
 target_include_directories(

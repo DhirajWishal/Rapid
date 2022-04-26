@@ -9,4 +9,8 @@ namespace rapid
 		m_Parameters.emplace_back(std::move(name), type, modifiers);
 		return *this;
 	}
+	
+	void Function::draw()
+	{
+	}
 }

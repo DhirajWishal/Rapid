@@ -2,8 +2,10 @@
 
 #include "MenuBar.hpp"
 #include "Utility/ThemeParser.hpp"
+#include "Utility/CloseEvent.hpp"
 
 #include <imgui.h>
+#include <SDL.h>
 
 #ifdef RAPID_PLATFORM_WINDOWS
 #	include <execution>

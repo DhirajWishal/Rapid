@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Components/Defaults.hpp"
 #include "UIComponent.hpp"
 #include <vector>
 #include <array>
@@ -70,6 +71,14 @@ namespace rapid
 		 */
 		std::string_view getTitle() const { return m_Title; }
 
+		/**
+		 * Clone and create a new builder.
+		 *
+		 * @param nodeID The new node ID.
+		 * @return The node builder.
+		 */
+		NodeBuilder clone(const int32_t nodeID) const;
+
 	private:
 		std::string m_Title;
 		int32_t& m_AttributeID;
@@ -116,28 +125,64 @@ namespace rapid
 
 	private:
 		/**
+		 * Create a new class node.
+		 * 
+		 * @return Whether or not a new node was created.
+		 */
+		bool createNewClass();
+
+		/**
+		 * Create a new struct node.
+		 *
+		 * @return Whether or not a new node was created.
+		 */
+		bool createNewStruct();
+
+		/**
+		 * Create a new member function node.
+		 * 
+		 * @return Whether or not a new node was created.
+		 */
+		bool createNewMember();
+
+		/**
 		 * Create a new node.
 		 *
 		 * @return Whether or not a new node was created.
 		 */
-		bool CreateNewNode();
+		bool createNewNode();
 
 		/**
 		 * Clean up the new node data.
 		 */
 		void cleanupNewNodeData();
 
+		/**
+		 * Show and get the data type from the user.
+		 */
+		data_type getDataType() const;
+
 	private:
 		char m_NewNodeNameBuffer[MaximumStringLength] = "";
 		int32_t m_NewNodeInputCount = 0;
 		int32_t m_NewNodeOutputCount = 0;
 
-		std::vector<std::pair<int32_t, int32_t>> m_Links;
+		std::vector<NodeBuilder> m_ClassNodeBuilders;
+		std::vector<NodeBuilder> m_StructNodeBuilders;
+		std::vector<NodeBuilder> m_MemberNodeBuilders;
 		std::vector<NodeBuilder> m_NodeBuilders;
+		std::vector<NodeBuilder> m_ActiveNodeBuilders;
+
+		std::vector<std::pair<int32_t, int32_t>> m_Links;
 		std::vector<std::array<char, MaximumStringLength>> m_NewNodeInputNames;
 		std::vector<std::array<char, MaximumStringLength>> m_NewNodeOutputNames;
 
 		int32_t m_NodeID = 0;
 		int32_t m_NodeAttributeID = 0;
+
+		bool m_ShouldCreateClass = false;
+		bool m_ShouldCreateStruct = false;
+		bool m_ShouldCreateMemberFunction = false;
+		bool m_ShouldCreateFunction = false;
 	};
 }

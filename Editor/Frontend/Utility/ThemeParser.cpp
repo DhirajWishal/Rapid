@@ -157,6 +157,19 @@ namespace
 		static StaticInitializer initializer;
 		return initializer.getColor(color);
 	}
+
+	/**
+	 * Resolve the path from the incoming string.
+	 * This basically identifies if the first two characters are "./" and if so, it appends the incoming json file's directory to it.
+	 */
+	std::filesystem::path ResolvePath(std::string_view path, std::filesystem::path&& directory)
+	{
+		// Check if we need the relative directory.
+		if (path[0] == '.' && (path[1] == '/' || path[1] == '\\'))
+			return directory / path.substr(2);
+
+		return path;
+	}
 }
 
 namespace rapid
@@ -188,6 +201,22 @@ namespace rapid
 					const auto defaultColor = styles.Colors[colorValue];
 					styles.Colors[colorValue] = itr->value.IsArray() ? GenericArrayToColor(itr->value.GetArray(), itr->name.GetString(), defaultColor) : defaultColor;
 				}
+			}
+
+			// Try and parse alpha.
+			else if (memberItr->name == "Alpha")
+				styles.Alpha = memberItr->value.IsFloat() ? memberItr->value.GetFloat() : memberItr->value.IsInt() ? memberItr->value.GetInt() : styles.Alpha;
+
+			// Try and parse alpha.
+			else if (memberItr->name == "DisabledAlpha")
+				styles.DisabledAlpha = memberItr->value.IsFloat() ? memberItr->value.GetFloat() : memberItr->value.IsInt() ? memberItr->value.GetInt() : styles.DisabledAlpha;
+
+			// Try and parse font.
+			else if (memberItr->name == "Font" && memberItr->value.Size() == 2)
+			{
+				const auto& fontData = memberItr->value;
+				const auto fontFile = ResolvePath(fontData[0].GetString(), themeFile.parent_path());
+				ImGui::GetIO().Fonts->AddFontFromFileTTF(fontFile.string().c_str(), fontData[1].GetFloat());
 			}
 		}
 	}

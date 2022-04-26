@@ -147,65 +147,109 @@ namespace rapid
 
 		// Transmit events to ImGui.
 		{
-			// Setup mouse data.
-			int32_t mouseX, mouseY;
-			const auto buttonState = SDL_GetMouseState(&mouseX, &mouseY);
-
 			auto& imGuiIO = ImGui::GetIO();
 			imGuiIO.Framerate = std::nano::den / diff.count();
 			imGuiIO.DeltaTime = diff.count() / static_cast<float>(std::nano::den);
-			imGuiIO.MousePos.x = static_cast<float>(mouseX);
-			imGuiIO.MousePos.y = static_cast<float>(mouseY);
-
-			// Left mouse button press.
-			if (buttonState & SDL_BUTTON_LEFT)
-				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
-			else
-				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
-
-			// Right mouse button press.
-			if (buttonState & SDL_BUTTON_RIGHT)
-				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Right, true);
-			else
-				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Right, false);
-
-			// Middle mouse button press.
-			if (buttonState & SDL_BUTTON_MIDDLE)
-				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, true);
-			else
-				imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, false);
-
-			// Set the scroll event.
-			imGuiIO.AddMouseWheelEvent(events.wheel.preciseX, events.wheel.preciseY);
-
-			// Finally let's do the keyboard inputs.
 
 			switch (events.type)
 			{
 			case SDL_KEYDOWN:
 				resolveKeyboardInputs(events.key.keysym.scancode, true);
-				imGuiIO.AddKeyEvent(ImGuiKey_LeftCtrl, events.key.keysym.mod & KMOD_LCTRL);
-				imGuiIO.AddKeyEvent(ImGuiKey_LeftShift, events.key.keysym.mod & KMOD_LSHIFT);
-				imGuiIO.AddKeyEvent(ImGuiKey_LeftAlt, events.key.keysym.mod & KMOD_LALT);
+				//imGuiIO.AddKeyEvent(ImGuiKey_LeftCtrl, events.key.keysym.mod & KMOD_LCTRL);
+				//imGuiIO.AddKeyEvent(ImGuiKey_LeftShift, events.key.keysym.mod & KMOD_LSHIFT);
+				//imGuiIO.AddKeyEvent(ImGuiKey_LeftAlt, events.key.keysym.mod & KMOD_LALT);
+				//
+				//imGuiIO.AddKeyEvent(ImGuiKey_RightCtrl, events.key.keysym.mod & KMOD_RCTRL);
+				//imGuiIO.AddKeyEvent(ImGuiKey_RightShift, events.key.keysym.mod & KMOD_RSHIFT);
+				//imGuiIO.AddKeyEvent(ImGuiKey_RightAlt, events.key.keysym.mod & KMOD_RALT);
 
-				imGuiIO.AddKeyEvent(ImGuiKey_RightCtrl, events.key.keysym.mod & KMOD_RCTRL);
-				imGuiIO.AddKeyEvent(ImGuiKey_RightShift, events.key.keysym.mod & KMOD_RSHIFT);
-				imGuiIO.AddKeyEvent(ImGuiKey_RightAlt, events.key.keysym.mod & KMOD_RALT);
+				if (events.key.keysym.mod & KMOD_CTRL)
+					imGuiIO.KeyMods |= ImGuiModFlags_Ctrl;
+
+				if (events.key.keysym.mod & KMOD_SHIFT)
+					imGuiIO.KeyMods |= ImGuiModFlags_Shift;
+
+				if (events.key.keysym.mod & KMOD_ALT)
+					imGuiIO.KeyMods |= ImGuiModFlags_Alt;
+
+				if (events.key.keysym.mod & KMOD_GUI)
+					imGuiIO.KeyMods |= ImGuiModFlags_Super;
+
 				break;
 
 			case SDL_KEYUP:
 				resolveKeyboardInputs(events.key.keysym.scancode, false);
-				imGuiIO.AddKeyEvent(ImGuiKey_LeftCtrl, events.key.keysym.mod & KMOD_LCTRL);
-				imGuiIO.AddKeyEvent(ImGuiKey_LeftShift, events.key.keysym.mod & KMOD_LSHIFT);
-				imGuiIO.AddKeyEvent(ImGuiKey_LeftAlt, events.key.keysym.mod & KMOD_LALT);
+				//imGuiIO.AddKeyEvent(ImGuiKey_LeftCtrl, events.key.keysym.mod & KMOD_LCTRL);
+				//imGuiIO.AddKeyEvent(ImGuiKey_LeftShift, events.key.keysym.mod & KMOD_LSHIFT);
+				//imGuiIO.AddKeyEvent(ImGuiKey_LeftAlt, events.key.keysym.mod & KMOD_LALT);
+				//
+				//imGuiIO.AddKeyEvent(ImGuiKey_RightCtrl, events.key.keysym.mod & KMOD_RCTRL);
+				//imGuiIO.AddKeyEvent(ImGuiKey_RightShift, events.key.keysym.mod & KMOD_RSHIFT);
+				//imGuiIO.AddKeyEvent(ImGuiKey_RightAlt, events.key.keysym.mod & KMOD_RALT);
 
-				imGuiIO.AddKeyEvent(ImGuiKey_RightCtrl, events.key.keysym.mod & KMOD_RCTRL);
-				imGuiIO.AddKeyEvent(ImGuiKey_RightShift, events.key.keysym.mod & KMOD_RSHIFT);
-				imGuiIO.AddKeyEvent(ImGuiKey_RightAlt, events.key.keysym.mod & KMOD_RALT);
+				//if (events.key.keysym.mod & KMOD_CTRL)
+				//	imGuiIO.KeyMods |= ImGuiModFlags_Ctrl;
+				//
+				//if (events.key.keysym.mod & KMOD_SHIFT)
+				//	imGuiIO.KeyMods |= ImGuiModFlags_Shift;
+				//
+				//if (events.key.keysym.mod & KMOD_ALT)
+				//	imGuiIO.KeyMods |= ImGuiModFlags_Alt;
+				//
+				//if (events.key.keysym.mod & KMOD_GUI)
+				//	imGuiIO.KeyMods |= ImGuiModFlags_Super;
+
 				break;
 
 			case SDL_TEXTINPUT:
 				imGuiIO.AddInputCharactersUTF8(events.text.text);
+				break;
+
+			case SDL_MOUSEBUTTONDOWN:
+				// Left mouse button press.
+				if (events.button.button == SDL_BUTTON_LEFT)
+				{
+					imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+					imGuiIO.MouseClickedCount[ImGuiMouseButton_Left] = events.button.clicks;
+				}
+
+
+				// Right mouse button press.
+				if (events.button.button == SDL_BUTTON_RIGHT)
+				{
+					imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Right, true);
+					imGuiIO.MouseClickedCount[ImGuiMouseButton_Right] = events.button.clicks;
+				}
+
+				// Middle mouse button press.
+				if (events.button.button == SDL_BUTTON_MIDDLE)
+				{
+					imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, true);
+					imGuiIO.MouseClickedCount[ImGuiMouseButton_Middle] = events.button.clicks;
+				}
+				break;
+
+			case SDL_MOUSEBUTTONUP:
+				// Left mouse button release.
+				if (events.button.button == SDL_BUTTON_LEFT)
+					imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+
+				// Right mouse button release.
+				if (events.button.button == SDL_BUTTON_RIGHT)
+					imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Right, false);
+
+				// Middle mouse button release.
+				if (events.button.button == SDL_BUTTON_MIDDLE)
+					imGuiIO.AddMouseButtonEvent(ImGuiMouseButton_Middle, false);
+				break;
+
+			case SDL_MOUSEMOTION:
+				imGuiIO.MousePos.x = static_cast<float>(events.motion.x);
+				imGuiIO.MousePos.y = static_cast<float>(events.motion.y);
+				break;
+
+			case SDL_MOUSEWHEEL:
+				imGuiIO.AddMouseWheelEvent(events.wheel.preciseX, events.wheel.preciseY);
 				break;
 
 			default:
@@ -421,7 +465,6 @@ namespace rapid
 		case SDL_SCANCODE_SEMICOLON:		imGuiKey = ImGuiKey_Semicolon; break;
 		case SDL_SCANCODE_APOSTROPHE:		imGuiKey = ImGuiKey_Apostrophe; break;
 		case SDL_SCANCODE_GRAVE:			imGuiKey = ImGuiKey_GraveAccent; break;
-
 
 		case SDL_SCANCODE_COMMA:			imGuiKey = ImGuiKey_Comma; break;
 		case SDL_SCANCODE_PERIOD:			imGuiKey = ImGuiKey_Period; break;

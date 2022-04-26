@@ -36,6 +36,11 @@ namespace rapid
 		Function& addParameter(std::string&& name, data_type type, modifier_bits_type modifiers);
 
 		/**
+		 * Draw the function in node editor.
+		 */
+		void draw();
+
+		/**
 		 * Get the name of the function.
 		 *
 		 * @return The name string.
