@@ -4,8 +4,10 @@
 
 #include "Components/Defaults.hpp"
 #include "UIComponent.hpp"
+
 #include <vector>
 #include <array>
+#include <filesystem>
 
 namespace rapid
 {
@@ -91,12 +93,27 @@ namespace rapid
 		std::string_view getTitle() const { return m_Title; }
 
 		/**
+		 * Get the node ID.
+		 * 
+		 * @return The ID.
+		 */
+		int32_t getID() const { return m_NodeID; }
+
+		/**
 		 * Clone and create a new builder.
 		 *
 		 * @param nodeID The new node ID.
 		 * @return The node builder.
 		 */
 		NodeBuilder clone(const int32_t nodeID) const;
+
+		/**
+		 * Get the attribute property.
+		 * 
+		 * @param attribute The attribute ID.
+		 * @return The property.
+		 */
+		int8_t getAttributeProperty(int32_t attribute) const;
 
 	private:
 		std::string m_Title;
@@ -122,9 +139,12 @@ namespace rapid
 	{
 	public:
 		/**
-		 * Default constructor.
+		 * Explicit constructor.
+		 * 
+		 * @param sourceFile The source file.
+		 * @param headerFile The header file.
 		 */
-		NodeEditor();
+		explicit NodeEditor(std::filesystem::path&& sourceFile, std::filesystem::path&& headerFile);
 
 		/**
 		 * Default destructor.
@@ -184,8 +204,9 @@ namespace rapid
 		char m_NewNodeNameBuffer[MaximumStringLength] = "";
 		char m_NewNodeNamespaceBuffer[MaximumStringLength] = "";
 		float m_ColorPicker[3] = {};
-		int32_t m_NewNodeInputCount = 0;
-		int32_t m_NewNodeOutputCount = 0;
+
+		std::filesystem::path m_SourceFile;
+		std::filesystem::path m_HeaderFile;
 
 		std::vector<NodeBuilder> m_ClassNodeBuilders;
 		std::vector<NodeBuilder> m_StructNodeBuilders;
@@ -194,10 +215,13 @@ namespace rapid
 
 		std::vector<NodeBuilder> m_ActiveNodeBuilders;
 
-		std::vector<std::pair<int32_t, int32_t>> m_Links;
+		std::vector<std::pair<std::pair<int32_t, int32_t>, std::pair<int32_t, int32_t>>> m_Links;
 		std::vector<std::pair<std::array<char, MaximumStringLength>, int32_t>> m_NewNodeMemberNames;
 		std::vector<std::array<char, MaximumStringLength>> m_NewNodeInputNames;
 		std::vector<std::array<char, MaximumStringLength>> m_NewNodeOutputNames;
+
+		int32_t m_NewNodeInputCount = 0;
+		int32_t m_NewNodeOutputCount = 0;
 
 		int32_t m_NodeID = 0;
 		int32_t m_NodeAttributeID = 0;

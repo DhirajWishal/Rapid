@@ -11,6 +11,9 @@ project(
 	DESCRIPTION "Visual programming editor primarily built for game engines."
 )
 
+# Set the CMake C++ standard.
+set(CMAKE_CXX_STANDARD 20)
+
 # Set the main include directory for the engine.
 set(RAPID_EDITOR_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Editor)
 
@@ -111,6 +114,14 @@ set(SDL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/SDL/include)
 
 # Add the rapid json parser include directory.
 set(RAPID_JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/rapidjson/include)
+
+# Set the output directories to where we want them to be.
+set_target_properties(SDL2
+	PROPERTIES
+	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Editor/Application"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Editor/Application"
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Editor/Application"
+)
 
 # Set global compile definitions.
 add_compile_definitions(

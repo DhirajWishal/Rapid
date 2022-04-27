@@ -1,6 +1,7 @@
 // Copyright (c) 2022 Dhiraj Wishal
 
 #include "MenuBar.hpp"
+#include "Globals.hpp"
 #include "Utility/ThemeParser.hpp"
 #include "Utility/CloseEvent.hpp"
 
@@ -26,6 +27,7 @@ namespace rapid
 			// Show the file menu.
 			if (ImGui::BeginMenu("File", &m_FileMenu))
 			{
+				if (ImGui::Selectable("Close")) GetGlobals().m_ShouldRun = false;
 				ImGui::EndMenu();
 			}
 

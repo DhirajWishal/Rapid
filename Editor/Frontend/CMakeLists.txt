@@ -27,7 +27,9 @@ add_library(
 	Utility/ThemeParser.cpp
 	Utility/ThemeParser.hpp
 	Utility/CloseEvent.hpp
- )
+	Globals.cpp
+	Globals.hpp
+)
 
 # Set the include directory.
 target_include_directories(

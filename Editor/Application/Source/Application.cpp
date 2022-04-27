@@ -4,6 +4,7 @@
 
 #include "Backend/ImGuiNode.hpp"
 #include "Frontend/Console.hpp"
+#include "Frontend/Globals.hpp"
 
 #include <imgui.h>
 #include <fstream>
@@ -11,7 +12,7 @@
 Application::Application()
 	: m_Engine(rapid::GraphicsEngine())
 	, m_Window(rapid::Window(m_Engine, "Rapid Editor"))
-	, m_NodeEditor({})
+	, m_NodeEditor(__FILE__, {})
 	, m_Limiter(60)
 {
 	// Create the node.
@@ -19,11 +20,8 @@ Application::Application()
 
 	showSourceCode();
 
-	while (m_Window.pollEvents())
+	while (m_Window.pollEvents() && rapid::GetGlobals().m_ShouldRun)
 	{
-		ImGui::ShowDemoWindow();
-		//m_Limiter.tick();
-
 		// Show the menu bar.
 		singleShot(m_MenuBar);
 

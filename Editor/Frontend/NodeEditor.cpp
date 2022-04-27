@@ -11,6 +11,8 @@
 
 #endif
 
+#include <fstream>
+
 namespace
 {
 	/**
@@ -24,6 +26,15 @@ namespace
 		const auto pNodes = reinterpret_cast<rapid::NodeBuilder*>(pUserData);
 		ImGui::SetTooltip(pNodes[nodeID].getTitle().data());
 	}
+
+	constexpr auto DefaultPublicColor = IM_COL32(0, 255, 0, 196);
+	constexpr auto DefaultPublicColorHovered = IM_COL32(0, 255, 0, 255);
+
+	constexpr auto DefaultPrivateColor = IM_COL32(255, 0, 0, 196);
+	constexpr auto DefaultPrivateColorHovered = IM_COL32(255, 0, 0, 255);
+
+	constexpr auto DefaultProtectedColor = IM_COL32(0, 0, 255, 196);
+	constexpr auto DefaultProtectedColorHovered = IM_COL32(0, 0, 255, 255);
 }
 
 namespace rapid
@@ -89,18 +100,18 @@ namespace rapid
 			}
 			else if (attribute.m_Property == 0)
 			{
-				ImNodes::PushColorStyle(ImNodesCol_Pin, IM_COL32(0, 255, 0, 196));
-				ImNodes::PushColorStyle(ImNodesCol_PinHovered, IM_COL32(0, 255, 0, 255));
+				ImNodes::PushColorStyle(ImNodesCol_Pin, DefaultPublicColor);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, DefaultPublicColorHovered);
 			}
 			else if (attribute.m_Property == 1)
 			{
-				ImNodes::PushColorStyle(ImNodesCol_Pin, IM_COL32(255, 0, 0, 196));
-				ImNodes::PushColorStyle(ImNodesCol_PinHovered, IM_COL32(255, 0, 0, 255));
+				ImNodes::PushColorStyle(ImNodesCol_Pin, DefaultPrivateColor);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, DefaultPrivateColorHovered);
 			}
 			else if (attribute.m_Property == 2)
 			{
-				ImNodes::PushColorStyle(ImNodesCol_Pin, IM_COL32(0, 0, 255, 196));
-				ImNodes::PushColorStyle(ImNodesCol_PinHovered, IM_COL32(0, 0, 255, 255));
+				ImNodes::PushColorStyle(ImNodesCol_Pin, DefaultProtectedColor);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, DefaultProtectedColorHovered);
 			}
 
 			// Set the attribute info.
@@ -137,8 +148,20 @@ namespace rapid
 		return newNode;
 	}
 
-	NodeEditor::NodeEditor()
-		: UIComponent("Node Editor")
+	int8_t NodeBuilder::getAttributeProperty(int32_t attribute) const
+	{
+		for (const auto& outputAttribute : m_OutputAttributes)
+		{
+			if (outputAttribute.m_AttributeID == attribute)
+				return outputAttribute.m_Property;
+		}
+
+		return -1;
+	}
+
+	NodeEditor::NodeEditor(std::filesystem::path&& sourceFile, std::filesystem::path&& headerFile)
+		: UIComponent(sourceFile.string().empty() ? headerFile.stem().string() : sourceFile.stem().string())
+		, m_SourceFile(std::move(sourceFile)), m_HeaderFile(std::move(headerFile))
 	{
 		ImNodes::CreateContext();
 
@@ -165,11 +188,7 @@ namespace rapid
 		{
 			// Classes
 			if (ImGui::Selectable("Create class")) m_ShouldCreateClass = true;
-			if (ImGui::IsItemHovered())
-			{
-				ImGui::SetTooltip("Create a new class node. Classes gets a pre-defined 'this' member which will link to member methods/ functions.");
-			}
-
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a new class node. Classes gets a pre-defined 'this' member which will link to member methods/ functions.");
 			for (const auto& node : m_ClassNodeBuilders)
 			{
 				if (ImGui::Selectable(node.getTitle().data()))
@@ -233,8 +252,52 @@ namespace rapid
 		// Create the links if we have any.
 		for (int i = 0; i < m_Links.size(); ++i)
 		{
-			const std::pair<int, int> p = m_Links[i];
-			ImNodes::Link(i, p.first, p.second);
+			const auto p = m_Links[i];
+			bool shouldPop = true;
+
+			for (const auto& node : m_ActiveNodeBuilders)
+			{
+				if (node.getID() == p.first.first || node.getID() == p.second.first)
+				{
+					auto prop = node.getAttributeProperty(p.first.second);
+					if (prop < 0)
+						prop = node.getAttributeProperty(p.second.second);
+
+					if (prop == -1)
+					{
+						shouldPop = false;
+					}
+					else if (prop == 0)
+					{
+						ImNodes::PushColorStyle(ImNodesCol_Link, DefaultPublicColor);
+						ImNodes::PushColorStyle(ImNodesCol_LinkHovered, DefaultPublicColorHovered);
+						ImNodes::PushColorStyle(ImNodesCol_LinkSelected, DefaultPublicColorHovered);
+					}
+					else if (prop == 1)
+					{
+						ImNodes::PushColorStyle(ImNodesCol_Link, DefaultPrivateColor);
+						ImNodes::PushColorStyle(ImNodesCol_LinkHovered, DefaultPrivateColorHovered);
+						ImNodes::PushColorStyle(ImNodesCol_LinkSelected, DefaultPrivateColorHovered);
+					}
+					else if (prop == 2)
+					{
+						ImNodes::PushColorStyle(ImNodesCol_Link, DefaultProtectedColor);
+						ImNodes::PushColorStyle(ImNodesCol_LinkHovered, DefaultProtectedColorHovered);
+						ImNodes::PushColorStyle(ImNodesCol_LinkSelected, DefaultProtectedColorHovered);
+					}
+
+					break;
+				}
+			}
+
+			ImNodes::Link(i, p.first.second, p.second.second);
+
+			if (shouldPop)
+			{
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+			}
 		}
 
 		// Make sure to show the mini map before we end!
@@ -245,9 +308,9 @@ namespace rapid
 		ImGui::End();
 
 		// Resolve the links.
-		int32_t startLink, endLink;
-		if (ImNodes::IsLinkCreated(&startLink, &endLink))
-			m_Links.emplace_back(startLink, endLink);
+		int32_t startNode, startLink, endNode, endLink;
+		if (ImNodes::IsLinkCreated(&startNode, &startLink, &endNode, &endLink))
+			m_Links.emplace_back(std::make_pair(startNode, startLink), std::make_pair(endNode, endLink));
 
 		// Remove links if we have to.
 		int32_t link;
@@ -302,9 +365,9 @@ namespace rapid
 				m_NodeID++,
 				m_NodeAttributeID,
 				NodeType::Class,
-				IM_COL32(m_ColorPicker[0] * 256, m_ColorPicker[1] * 256, m_ColorPicker[2] * 256, 128),
-				IM_COL32(m_ColorPicker[0] * 256, m_ColorPicker[1] * 256, m_ColorPicker[2] * 256, 192),
-				IM_COL32(m_ColorPicker[0] * 256, m_ColorPicker[1] * 256, m_ColorPicker[2] * 256, 255));
+				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 128),
+				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 192),
+				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 255));
 
 			// Add the default this variable.
 			node.addOutputAttribute("this", 1);
@@ -380,9 +443,9 @@ namespace rapid
 				m_NodeID++,
 				m_NodeAttributeID,
 				NodeType::Struct,
-				IM_COL32(m_ColorPicker[0] * 256, m_ColorPicker[1] * 256, m_ColorPicker[2] * 256, 128),
-				IM_COL32(m_ColorPicker[0] * 256, m_ColorPicker[1] * 256, m_ColorPicker[2] * 256, 255),
-				IM_COL32(m_ColorPicker[0] * 256, m_ColorPicker[1] * 256, m_ColorPicker[2] * 256, 192));
+				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 128),
+				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 255),
+				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 192));
 
 			// Add the default this variable.
 			node.addOutputAttribute("this", 1);
@@ -461,9 +524,9 @@ namespace rapid
 				m_NodeID++,
 				m_NodeAttributeID,
 				NodeType::MemberFunction,
-				IM_COL32(44, 117, 255, 128),
-				IM_COL32(44, 117, 255, 255),
-				IM_COL32(44, 117, 255, 196));
+				IM_COL32(10, 80, 192, 255),
+				IM_COL32(0, 98, 255, 255),
+				IM_COL32(22, 93, 207, 255));
 
 			// Add the default this variable.
 			node.addInputAttribute("this");
@@ -546,9 +609,10 @@ namespace rapid
 				m_NodeID++,
 				m_NodeAttributeID,
 				NodeType::Function,
-				IM_COL32(83, 69, 22, 128),
-				IM_COL32(83, 69, 22, 255),
-				IM_COL32(83, 69, 22, 196));
+				IM_COL32(93, 41, 178, 255),
+				IM_COL32(147, 81, 255, 255),
+				IM_COL32(133, 54, 209, 255)
+			);
 
 			// Create the input attributes.
 			for (auto& name : m_NewNodeInputNames)
