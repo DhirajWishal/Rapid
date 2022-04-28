@@ -11,8 +11,6 @@
 
 #endif
 
-#include <fstream>
-
 namespace
 {
 	/**

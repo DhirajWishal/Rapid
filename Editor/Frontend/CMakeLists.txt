@@ -29,6 +29,8 @@ add_library(
 	Utility/CloseEvent.hpp
 	Globals.cpp
 	Globals.hpp
+	CodeGenerator.cpp
+	CodeGenerator.hpp
 )
 
 # Set the include directory.
@@ -39,10 +41,11 @@ target_include_directories(
 	${RAPID_EDITOR_INCLUDE_DIR}
 	${IMNODES_INCLUDE_DIR}
 	${RAPID_JSON_INCLUDE_DIR}
+	${CLANG_INCLUDE_DIR}
 )
 
 # Add the target link libraries.
-target_link_libraries(Frontend Backend imnodes)
+target_link_libraries(Frontend Backend imnodes libclang)
 
 # Set the C++ standard as C++20.
 set_property(TARGET Frontend PROPERTY CXX_STANDARD 20)
