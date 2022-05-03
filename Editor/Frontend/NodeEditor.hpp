@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <filesystem>
+#include <nlohmann/json.hpp>
 
 namespace rapid
 {
@@ -69,16 +70,18 @@ namespace rapid
 		 * Add an input attribute to the node.
 		 *
 		 * @param name The name of the attribute.
+		 * @return The created attribute reference.
 		 */
-		void addInputAttribute(std::string name);
+		Attribute& addInputAttribute(std::string name);
 
 		/**
 		 * Add an output attribute to the node.
 		 *
 		 * @param name The name of the attribute.
 		 * @param prop The property value. This is used by object types. Default is -1.
+		 * @return The created attribute reference.
 		 */
-		void addOutputAttribute(std::string name, int8_t prop = -1);
+		Attribute& addOutputAttribute(std::string name, int8_t prop = -1);
 
 		/**
 		 * Show the node to the user.
@@ -94,10 +97,17 @@ namespace rapid
 
 		/**
 		 * Get the node ID.
-		 * 
+		 *
 		 * @return The ID.
 		 */
 		int32_t getID() const { return m_NodeID; }
+
+		/**
+		 * Get the node type.
+		 *
+		 * @return The node type.
+		 */
+		NodeType type() const { return m_Type; }
 
 		/**
 		 * Clone and create a new builder.
@@ -109,11 +119,25 @@ namespace rapid
 
 		/**
 		 * Get the attribute property.
-		 * 
+		 *
 		 * @param attribute The attribute ID.
 		 * @return The property.
 		 */
 		int8_t getAttributeProperty(int32_t attribute) const;
+
+		/**
+		 * Get the input attributes.
+		 *
+		 * @return The attributes.
+		 */
+		const std::vector<Attribute>& getInputs() const { return m_InputAttributes; }
+
+		/**
+		 * Get the output attributes.
+		 *
+		 * @return The attributes.
+		 */
+		const std::vector<Attribute>& getOutputs() const { return m_OutputAttributes; }
 
 	private:
 		std::string m_Title;
@@ -140,7 +164,7 @@ namespace rapid
 	public:
 		/**
 		 * Explicit constructor.
-		 * 
+		 *
 		 * @param sourceFile The source file.
 		 * @param headerFile The header file.
 		 */
@@ -163,18 +187,17 @@ namespace rapid
 
 	private:
 		/**
-		 * Create a new class node.
-		 *
-		 * @return Whether or not a new node was created.
+		 * Show class info function.
+		 * This shows all the class information.
 		 */
-		bool createNewClass();
+		void showClassInfo();
 
 		/**
-		 * Create a new struct node.
-		 *
-		 * @return Whether or not a new node was created.
+		 * Create a new member variable.
+		 * 
+		 * @return Whether or not a new member was created.
 		 */
-		bool createNewStruct();
+		bool createNewMemberVariable();
 
 		/**
 		 * Create a new member function node.
@@ -200,7 +223,14 @@ namespace rapid
 		 */
 		data_type getDataType() const;
 
+		/**
+		 * Generate source code from the nodes.
+		 */
+		void generateSource() const;
+
 	private:
+		nlohmann::json m_JsonDocument;
+
 		char m_NewNodeNameBuffer[MaximumStringLength] = "";
 		char m_NewNodeNamespaceBuffer[MaximumStringLength] = "";
 		float m_ColorPicker[3] = {};
@@ -216,7 +246,7 @@ namespace rapid
 		std::vector<NodeBuilder> m_ActiveNodeBuilders;
 
 		std::vector<std::pair<std::pair<int32_t, int32_t>, std::pair<int32_t, int32_t>>> m_Links;
-		std::vector<std::pair<std::array<char, MaximumStringLength>, int32_t>> m_NewNodeMemberNames;
+		std::pair<std::array<char, MaximumStringLength>, int32_t> m_NewNodeMemberName;
 		std::vector<std::array<char, MaximumStringLength>> m_NewNodeInputNames;
 		std::vector<std::array<char, MaximumStringLength>> m_NewNodeOutputNames;
 
@@ -226,8 +256,7 @@ namespace rapid
 		int32_t m_NodeID = 0;
 		int32_t m_NodeAttributeID = 0;
 
-		bool m_ShouldCreateClass = false;
-		bool m_ShouldCreateStruct = false;
+		bool m_ShouldCreateMemberVariable = false;
 		bool m_ShouldCreateMemberFunction = false;
 		bool m_ShouldCreateFunction = false;
 	};

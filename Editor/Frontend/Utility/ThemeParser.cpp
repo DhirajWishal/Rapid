@@ -4,9 +4,7 @@
 #include "../Console.hpp"
 
 #include <imgui.h>
-#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>
+#include <nlohmann/json.hpp>
 
 #include <fstream>
 #include <unordered_map>
@@ -51,21 +49,21 @@ namespace
 	 * @param defaultColor The default color value.
 	 * @return The color.
 	 */
-	ImVec4 GenericArrayToColor(const rapidjson::GenericArray<true, rapidjson::Value>& arr, std::string_view value, ImVec4 defaultColor)
-	{
-		if (arr.Size() != 4)
-		{
-			rapid::GetConsole().log(std::string("Invalid color type found in the theme file! Value: ") + value.data(), rapid::Severity::Warning);
-			return defaultColor;
-		}
-
-		const float r = (arr[0].IsFloat() ? arr[0].GetFloat() : arr[0].GetInt()) / 256.0f;
-		const float g = (arr[1].IsFloat() ? arr[1].GetFloat() : arr[1].GetInt()) / 256.0f;
-		const float b = (arr[2].IsFloat() ? arr[2].GetFloat() : arr[2].GetInt()) / 256.0f;
-		const float a = (arr[3].IsFloat() ? arr[3].GetFloat() : arr[3].GetInt()) / 256.0f;
-
-		return ImVec4(r, g, b, a);
-	}
+	//ImVec4 GenericArrayToColor(const rapidjson::GenericArray<true, rapidjson::Value>& arr, std::string_view value, ImVec4 defaultColor)
+	//{
+	//	if (arr.Size() != 4)
+	//	{
+	//		rapid::GetConsole().log(std::string("Invalid color type found in the theme file! Value: ") + value.data(), rapid::Severity::Warning);
+	//		return defaultColor;
+	//	}
+	//
+	//	const float r = (arr[0].IsFloat() ? arr[0].GetFloat() : arr[0].GetInt()) / 256.0f;
+	//	const float g = (arr[1].IsFloat() ? arr[1].GetFloat() : arr[1].GetInt()) / 256.0f;
+	//	const float b = (arr[2].IsFloat() ? arr[2].GetFloat() : arr[2].GetInt()) / 256.0f;
+	//	const float a = (arr[3].IsFloat() ? arr[3].GetFloat() : arr[3].GetInt()) / 256.0f;
+	//
+	//	return ImVec4(r, g, b, a);
+	//}
 
 	/**
 	 * Static initializer structure.
@@ -183,41 +181,41 @@ namespace rapid
 			return;
 
 		// Parse the document.
-		rapidjson::Document document;
-		document.Parse(content.c_str());
+		nlohmann::json document;
+		document.parse(content.c_str());
 
 		auto& styles = ImGui::GetStyle();
 
 		// Iterate over the members and get the values.
-		for (auto memberItr = document.MemberBegin(); memberItr != document.MemberEnd(); ++memberItr)
+		for (auto memberItr = document.begin(); memberItr != document.end(); ++memberItr)
 		{
-			// Try and parse the colors.
-			if (memberItr->name == "Colors")
-			{
-				const auto& colors = memberItr->value;
-				for (auto itr = colors.MemberBegin(); itr != colors.MemberEnd(); ++itr)
-				{
-					const auto colorValue = GetColor(itr->name.GetString());
-					const auto defaultColor = styles.Colors[colorValue];
-					styles.Colors[colorValue] = itr->value.IsArray() ? GenericArrayToColor(itr->value.GetArray(), itr->name.GetString(), defaultColor) : defaultColor;
-				}
-			}
-
-			// Try and parse alpha.
-			else if (memberItr->name == "Alpha")
-				styles.Alpha = memberItr->value.IsFloat() ? memberItr->value.GetFloat() : memberItr->value.IsInt() ? memberItr->value.GetInt() : styles.Alpha;
-
-			// Try and parse alpha.
-			else if (memberItr->name == "DisabledAlpha")
-				styles.DisabledAlpha = memberItr->value.IsFloat() ? memberItr->value.GetFloat() : memberItr->value.IsInt() ? memberItr->value.GetInt() : styles.DisabledAlpha;
-
-			// Try and parse font.
-			else if (memberItr->name == "Font" && memberItr->value.Size() == 2)
-			{
-				const auto& fontData = memberItr->value;
-				const auto fontFile = ResolvePath(fontData[0].GetString(), themeFile.parent_path());
-				ImGui::GetIO().Fonts->AddFontFromFileTTF(fontFile.string().c_str(), fontData[1].GetFloat());
-			}
+			//// Try and parse the colors.
+			//if (memberItr->name == "Colors")
+			//{
+			//	const auto& colors = memberItr->value;
+			//	for (auto itr = colors.MemberBegin(); itr != colors.MemberEnd(); ++itr)
+			//	{
+			//		const auto colorValue = GetColor(itr->name.GetString());
+			//		const auto defaultColor = styles.Colors[colorValue];
+			//		styles.Colors[colorValue] = itr->value.IsArray() ? GenericArrayToColor(itr->value.GetArray(), itr->name.GetString(), defaultColor) : defaultColor;
+			//	}
+			//}
+			//
+			//// Try and parse alpha.
+			//else if (memberItr->name == "Alpha")
+			//	styles.Alpha = memberItr->value.IsFloat() ? memberItr->value.GetFloat() : memberItr->value.IsInt() ? memberItr->value.GetInt() : styles.Alpha;
+			//
+			//// Try and parse alpha.
+			//else if (memberItr->name == "DisabledAlpha")
+			//	styles.DisabledAlpha = memberItr->value.IsFloat() ? memberItr->value.GetFloat() : memberItr->value.IsInt() ? memberItr->value.GetInt() : styles.DisabledAlpha;
+			//
+			//// Try and parse font.
+			//else if (memberItr->name == "Font" && memberItr->value.Size() == 2)
+			//{
+			//	const auto& fontData = memberItr->value;
+			//	const auto fontFile = ResolvePath(fontData[0].GetString(), themeFile.parent_path());
+			//	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontFile.string().c_str(), fontData[1].GetFloat());
+			//}
 		}
 	}
 }

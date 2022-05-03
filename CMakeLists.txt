@@ -112,16 +112,11 @@ target_include_directories(imnodes PUBLIC ${IMGUI_INCLUDE_DIR})
 add_subdirectory(ThirdParty/SDL)
 set(SDL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/SDL/include)
 
-# Add the rapid json parser include directory.
-set(RAPID_JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/rapidjson/include)
-
-# Include the clang project
-set(LLVM_ENABLE_PROJECTS "clang")
-add_subdirectory(ThirdParty/llvm-project/llvm)
-set(CLANG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/llvm-project/clang/include)
+# Add the json parser include directory.
+set(JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/json/include)
 
 # Set the output directories to where we want them to be.
-set_target_properties(SDL2 libclang
+set_target_properties(SDL2
 	PROPERTIES
 	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Editor/Application"
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Editor/Application"

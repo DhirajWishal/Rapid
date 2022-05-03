@@ -40,12 +40,11 @@ target_include_directories(
 	
 	${RAPID_EDITOR_INCLUDE_DIR}
 	${IMNODES_INCLUDE_DIR}
-	${RAPID_JSON_INCLUDE_DIR}
-	${CLANG_INCLUDE_DIR}
+	${JSON_INCLUDE_DIR}
 )
 
 # Add the target link libraries.
-target_link_libraries(Frontend Backend imnodes libclang)
+target_link_libraries(Frontend Backend imnodes)
 
 # Set the C++ standard as C++20.
 set_property(TARGET Frontend PROPERTY CXX_STANDARD 20)

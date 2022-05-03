@@ -11,6 +11,8 @@
 
 #endif
 
+#include <fstream>
+
 namespace
 {
 	/**
@@ -44,14 +46,14 @@ namespace rapid
 	{
 	}
 
-	void NodeBuilder::addInputAttribute(std::string name)
+	NodeBuilder::Attribute& NodeBuilder::addInputAttribute(std::string name)
 	{
-		m_InputAttributes.emplace_back(std::move(name), m_AttributeID++, -1);
+		return m_InputAttributes.emplace_back(std::move(name), m_AttributeID++, -1);
 	}
 
-	void NodeBuilder::addOutputAttribute(std::string name, int8_t prop)
+	NodeBuilder::Attribute& NodeBuilder::addOutputAttribute(std::string name, int8_t prop)
 	{
-		m_OutputAttributes.emplace_back(std::move(name), m_AttributeID++, prop);
+		return m_OutputAttributes.emplace_back(std::move(name), m_AttributeID++, prop);
 	}
 
 	void NodeBuilder::show() const
@@ -85,44 +87,51 @@ namespace rapid
 		}
 
 		// Now let's render all the output attributes.
+		int8_t previousProperty = -1;
 		for (const auto& attribute : m_OutputAttributes)
 		{
-			// Make sure to push the attribute flag so we can detach the link.
-			ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
-
 			// Push the property colors.
 			if (attribute.m_Property == -1)
 			{
+				// Make sure to push the attribute flag so we can detach the link.
+				ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
+
 				ImNodes::PushColorStyle(ImNodesCol_Pin, ImNodes::GetStyle().Colors[ImNodesCol_Pin]);
 				ImNodes::PushColorStyle(ImNodesCol_PinHovered, ImNodes::GetStyle().Colors[ImNodesCol_PinHovered]);
-			}
-			else if (attribute.m_Property == 0)
-			{
-				ImNodes::PushColorStyle(ImNodesCol_Pin, DefaultPublicColor);
-				ImNodes::PushColorStyle(ImNodesCol_PinHovered, DefaultPublicColorHovered);
-			}
-			else if (attribute.m_Property == 1)
-			{
-				ImNodes::PushColorStyle(ImNodesCol_Pin, DefaultPrivateColor);
-				ImNodes::PushColorStyle(ImNodesCol_PinHovered, DefaultPrivateColorHovered);
-			}
-			else if (attribute.m_Property == 2)
-			{
-				ImNodes::PushColorStyle(ImNodesCol_Pin, DefaultProtectedColor);
-				ImNodes::PushColorStyle(ImNodesCol_PinHovered, DefaultProtectedColorHovered);
-			}
 
-			// Set the attribute info.
-			ImNodes::BeginOutputAttribute(attribute.m_AttributeID, ImNodesPinShape_TriangleFilled);
-			ImGui::Text(attribute.m_AttributeName.data());
-			ImNodes::EndOutputAttribute();
+				// Set the attribute info.
+				ImNodes::BeginOutputAttribute(attribute.m_AttributeID, ImNodesPinShape_TriangleFilled);
+				ImGui::Text(attribute.m_AttributeName.data());
+				ImNodes::EndOutputAttribute();
 
-			// Pop the color styles.
-			ImNodes::PopColorStyle();
-			ImNodes::PopColorStyle();
+				// Pop the color styles.
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
 
-			// Don't forget to pop the attribute flag!
-			ImNodes::PopAttributeFlag();
+				// Don't forget to pop the attribute flag!
+				ImNodes::PopAttributeFlag();
+			}
+			else
+			{
+				ImNodes::BeginStaticAttribute(attribute.m_AttributeID);
+
+				if (previousProperty != attribute.m_Property)
+				{
+					previousProperty = attribute.m_Property;
+
+					if (attribute.m_Property == 0)
+						ImGui::Text("public:");
+
+					else if (attribute.m_Property == 1)
+						ImGui::Text("private:");
+
+					else if (attribute.m_Property == 2)
+						ImGui::Text("protected:");
+				}
+
+				ImGui::Text(("\t" + attribute.m_AttributeName).data());
+				ImNodes::EndStaticAttribute();
+			}
 		}
 
 		// Let's end the node.
@@ -165,11 +174,25 @@ namespace rapid
 
 		// Try and get the previous state.
 		ImNodes::LoadCurrentEditorStateFromIniFile("editor.ini");
+
+		std::ifstream jsonFile(m_Title + ".rof");
+		if (jsonFile.is_open())
+		{
+			jsonFile >> m_JsonDocument;
+		}
+		else
+		{
+			m_JsonDocument["name"] = m_Title;
+		}
+		jsonFile.close();
 	}
 
 	NodeEditor::~NodeEditor()
 	{
+		// Generate the source.
+		generateSource();
 
+		// Save and destroy the context.
 		ImNodes::SaveCurrentEditorStateToIniFile("editor.ini");
 		ImNodes::DestroyContext();
 	}
@@ -180,28 +203,19 @@ namespace rapid
 		ImGui::Begin(m_Title.c_str());
 		ImNodes::BeginNodeEditor();
 
+		const auto& jsonNode = m_JsonDocument["name"];
+
+		for (const auto& node : jsonNode)
+		{
+		}
+
 		// If the user right-clicks, let's show the menu.
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
 		if (ImGui::BeginPopupContextWindow("Options", ImGuiPopupFlags_MouseButtonRight))
 		{
-			// Classes
-			if (ImGui::Selectable("Create class")) m_ShouldCreateClass = true;
-			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a new class node. Classes gets a pre-defined 'this' member which will link to member methods/ functions.");
-			for (const auto& node : m_ClassNodeBuilders)
-			{
-				if (ImGui::Selectable(node.getTitle().data()))
-					m_ActiveNodeBuilders.emplace_back(node.clone(m_NodeID++));
-			}
-
-			// Structs.
-			ImGui::Separator();
-			if (ImGui::Selectable("Create struct")) m_ShouldCreateStruct = true;
-			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a new struct node. Classes gets a pre-defined 'this' member which will link to member methods/ functions.");
-			for (const auto& node : m_StructNodeBuilders)
-			{
-				if (ImGui::Selectable(node.getTitle().data()))
-					m_ActiveNodeBuilders.emplace_back(node.clone(m_NodeID++));
-			}
+			// Member variables.
+			if (ImGui::Selectable("Create member variable")) m_ShouldCreateMemberVariable = true;
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a new member variable.");
 
 			// Member functions.
 			ImGui::Separator();
@@ -225,20 +239,18 @@ namespace rapid
 
 			ImGui::EndPopup();
 		}
-		ImGui::PopStyleVar();
 
 		// If we should, let's create a new node(s).
-		if (m_ShouldCreateClass)
-			m_ShouldCreateClass = createNewClass();
-
-		if (m_ShouldCreateStruct)
-			m_ShouldCreateStruct = createNewStruct();
+		if (m_ShouldCreateMemberVariable)
+			m_ShouldCreateMemberVariable = createNewMemberVariable();
 
 		if (m_ShouldCreateMemberFunction)
 			m_ShouldCreateMemberFunction = createNewMember();
 
 		if (m_ShouldCreateFunction)
 			m_ShouldCreateFunction = createNewNode();
+
+		ImGui::PopStyleVar();
 
 		// Finally we can show the nodes.
 		for (const auto& node : m_ActiveNodeBuilders)
@@ -319,144 +331,79 @@ namespace rapid
 		int32_t hoveredLink;
 		if (ImNodes::IsLinkHovered(&hoveredLink))
 			ImGui::SetTooltip("Link");
+
+		// Show the class information.
+		showClassInfo();
 	}
 
-	bool NodeEditor::createNewClass()
+	void NodeEditor::showClassInfo()
 	{
-		ImGui::Begin("Create New Class");
-		ImGui::TextWrapped("Classes are special nodes where there are no inputs, but is used to contain data. Every class gets its own 'this' member variable, which will be passed to member functions and will link member functions to classes.");
+		ImGui::Begin("Class Information");
+		ImGui::Text("Class name: %s", m_Title.c_str());
+
 		ImGui::Separator();
+		ImGui::Text("Member variables");
 
-		ImGui::ColorEdit3("Color", m_ColorPicker);
-		ImGui::InputText("Namespace", m_NewNodeNamespaceBuffer, IM_ARRAYSIZE(m_NewNodeNamespaceBuffer));
-		ImGui::InputText("Class name", m_NewNodeNameBuffer, IM_ARRAYSIZE(m_NewNodeNameBuffer));
-		ImGui::Separator();
-
-		// Get the variable names.
-		ImGui::InputInt("Member variable count", &m_NewNodeOutputCount);
-		if (m_NewNodeOutputCount < 0) m_NewNodeOutputCount = 0;
-
-		m_NewNodeMemberNames.resize(m_NewNodeOutputCount);
-		for (int32_t i = 0; i < m_NewNodeOutputCount; i++)
+		if (m_JsonDocument["name"].size() > 1)
 		{
-			ImGui::InputText(("Member variable " + std::to_string(i + 1)).c_str(), m_NewNodeMemberNames[i].first.data(), m_NewNodeMemberNames[i].first.size());
-			ImGui::SameLine(); if (ImGui::RadioButton(("public##" + std::to_string(i)).c_str(), m_NewNodeMemberNames[i].second == 0)) m_NewNodeMemberNames[i].second = 0;
-			ImGui::SameLine(); if (ImGui::RadioButton(("private##" + std::to_string(i)).c_str(), m_NewNodeMemberNames[i].second == 1)) m_NewNodeMemberNames[i].second = 1;
-			ImGui::SameLine(); if (ImGui::RadioButton(("protected##" + std::to_string(i)).c_str(), m_NewNodeMemberNames[i].second == 2)) m_NewNodeMemberNames[i].second = 2;
-		}
-
-		// We can try to create if the user wants to.
-		if (ImGui::Button("Create"))
-		{
-			// Stop it here because we anyway have to.
-			ImGui::End();
-
-			// Check if we have data, if not we can return.
-			if (!m_NewNodeNameBuffer[0])
+			int8_t previousProperty = -1;
+			auto& node = m_JsonDocument["name"]["variables"];
+			for (auto itr = node.begin(); itr != node.end(); ++itr)
 			{
-				GetConsole().log("Failed to create a new node! Make sure that you have data to create the node first.", Severity::Warning);
-				return true;
+				const auto& variable = *itr;
+				const auto& name = itr.key();
+				const auto& type = variable["type"].get<std::string>();
+				const auto prop = variable["access"].get<int>();
+
+				if (previousProperty != prop)
+				{
+					previousProperty = prop;
+
+					if (prop == 0)
+						ImGui::Text("public:");
+
+					else if (prop == 1)
+						ImGui::Text("private:");
+
+					else if (prop == 2)
+						ImGui::Text("protected:");
+				}
+
+				ImGui::Text(("\t" + type + " " + name).c_str());
 			}
-
-			auto& node = m_ClassNodeBuilders.emplace_back(
-				m_NewNodeNameBuffer,
-				m_NodeID++,
-				m_NodeAttributeID,
-				NodeType::Class,
-				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 128),
-				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 192),
-				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 255));
-
-			// Add the default this variable.
-			node.addOutputAttribute("this", 1);
-
-			// Create the output attributes.
-			for (auto& name : m_NewNodeMemberNames)
-				node.addOutputAttribute(name.first.data(), name.second);
-
-			m_ActiveNodeBuilders.emplace_back(node);
-
-			// Make sure to clear the values before we leave!
-			cleanupNewNodeData();
-
-			return false;
 		}
-
-		// Cancel if the user wants to.
-		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
-		{
-			ImGui::End();
-			cleanupNewNodeData();
-			return false;
-		}
-
-		// Or we can clear.
-		ImGui::SameLine();
-		if (ImGui::Button("Clear")) cleanupNewNodeData();
 
 		ImGui::End();
-		return true;
 	}
 
-	bool NodeEditor::createNewStruct()
+	bool NodeEditor::createNewMemberVariable()
 	{
-		ImGui::Begin("Create New Struct");
-		ImGui::TextWrapped("Structs are much like classes, but the only difference is that in classes all the members are private by default. On structs they are public by default.");
-		ImGui::Separator();
-
-		ImGui::ColorEdit3("Color", m_ColorPicker);
-		ImGui::InputText("Namespace", m_NewNodeNamespaceBuffer, IM_ARRAYSIZE(m_NewNodeNamespaceBuffer));
-		ImGui::InputText("Struct name", m_NewNodeNameBuffer, IM_ARRAYSIZE(m_NewNodeNameBuffer));
-		ImGui::Separator();
+		ImGui::Begin("Create New Member Variable");
 
 		// Get the variable names.
-		ImGui::InputInt("Member variable count", &m_NewNodeOutputCount);
-		if (m_NewNodeOutputCount < 0) m_NewNodeOutputCount = 0;
-
-		m_NewNodeMemberNames.resize(m_NewNodeOutputCount);
-		for (int32_t i = 0; i < m_NewNodeOutputCount; i++)
-		{
-			ImGui::InputText(("Member variable " + std::to_string(i + 1)).c_str(), m_NewNodeMemberNames[i].first.data(), m_NewNodeMemberNames[i].first.size());
-			ImGui::SameLine(); if (ImGui::RadioButton(("public##" + std::to_string(i)).c_str(), m_NewNodeMemberNames[i].second == 0)) m_NewNodeMemberNames[i].second = 0;
-			ImGui::SameLine(); if (ImGui::RadioButton(("private##" + std::to_string(i)).c_str(), m_NewNodeMemberNames[i].second == 1)) m_NewNodeMemberNames[i].second = 1;
-			ImGui::SameLine(); if (ImGui::RadioButton(("protected##" + std::to_string(i)).c_str(), m_NewNodeMemberNames[i].second == 2)) m_NewNodeMemberNames[i].second = 2;
-		}
+		ImGui::InputText("Member variable", m_NewNodeMemberName.first.data(), m_NewNodeMemberName.first.size());
+		if (ImGui::RadioButton("public", m_NewNodeMemberName.second == 0)) m_NewNodeMemberName.second = 0;
+		ImGui::SameLine(); if (ImGui::RadioButton("private", m_NewNodeMemberName.second == 1)) m_NewNodeMemberName.second = 1;
+		ImGui::SameLine(); if (ImGui::RadioButton("protected", m_NewNodeMemberName.second == 2)) m_NewNodeMemberName.second = 2;
 
 		// We can try to create if the user wants to.
 		if (ImGui::Button("Create"))
 		{
-			// Stop it here because we anyway have to.
 			ImGui::End();
 
 			// Check if we have data, if not we can return.
-			if (!m_NewNodeNameBuffer[0])
+			if (!m_NewNodeMemberName.first[0])
 			{
 				GetConsole().log("Failed to create a new node! Make sure that you have data to create the node first.", Severity::Warning);
 				return true;
 			}
 
-			auto& node = m_StructNodeBuilders.emplace_back(
-				m_NewNodeNameBuffer,
-				m_NodeID++,
-				m_NodeAttributeID,
-				NodeType::Struct,
-				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 128),
-				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 255),
-				IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 192));
-
-			// Add the default this variable.
-			node.addOutputAttribute("this", 1);
-
-			// Create the output attributes.
-			for (auto& name : m_NewNodeMemberNames)
-				node.addOutputAttribute(name.first.data(), name.second);
-
-			m_ActiveNodeBuilders.emplace_back(node);
+			auto& node = m_JsonDocument["name"]["variables"][m_NewNodeMemberName.first.data()];
+			node["access"] = m_NewNodeMemberName.second;
+			node["type"] = "int";
 
 			// Make sure to clear the values before we leave!
-			cleanupNewNodeData();
-
+			m_NewNodeMemberName.first.fill(0);
 			return false;
 		}
 
@@ -464,14 +411,15 @@ namespace rapid
 		ImGui::SameLine();
 		if (ImGui::Button("Cancel"))
 		{
+			m_NewNodeMemberName.first.fill(0);
+
 			ImGui::End();
-			cleanupNewNodeData();
 			return false;
 		}
 
 		// Or we can clear.
 		ImGui::SameLine();
-		if (ImGui::Button("Clear")) cleanupNewNodeData();
+		if (ImGui::Button("Clear")) m_NewNodeMemberName.first.fill(0);;
 
 		ImGui::End();
 		return true;
@@ -529,13 +477,26 @@ namespace rapid
 			// Add the default this variable.
 			node.addInputAttribute("this");
 
+			auto& jsonNode = m_JsonDocument["name"]["MemberFunctions"][node.getTitle()];
+
 			// Create the input attributes.
 			for (auto& name : m_NewNodeInputNames)
+			{
 				node.addInputAttribute(name.data());
+				jsonNode["parameters"][name.data()] = "int";
+			}
 
 			// Create the output attributes.
 			for (auto& name : m_NewNodeOutputNames)
+			{
 				node.addOutputAttribute(name.data());
+				jsonNode["returns"][name.data()] = "int";
+			}
+
+			jsonNode["ID"] = m_NodeID++;
+			jsonNode["normal"] = IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 128);
+			jsonNode["hovered"] = IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 192);
+			jsonNode["selected"] = IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 255);
 
 			m_ActiveNodeBuilders.emplace_back(node);
 
@@ -612,13 +573,26 @@ namespace rapid
 				IM_COL32(133, 54, 209, 255)
 			);
 
+			auto& jsonNode = m_JsonDocument["name"]["Functions"][node.getTitle()];
+
 			// Create the input attributes.
 			for (auto& name : m_NewNodeInputNames)
+			{
 				node.addInputAttribute(name.data());
+				jsonNode["parameters"][name.data()] = "int";
+			}
 
 			// Create the output attributes.
 			for (auto& name : m_NewNodeOutputNames)
+			{
 				node.addOutputAttribute(name.data());
+				jsonNode["returns"][name.data()] = "int";
+			}
+
+			jsonNode["ID"] = m_NodeID++;
+			jsonNode["normal"] = IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 128);
+			jsonNode["hovered"] = IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 192);
+			jsonNode["selected"] = IM_COL32(m_ColorPicker[0] * 255, m_ColorPicker[1] * 255, m_ColorPicker[2] * 255, 255);
 
 			m_ActiveNodeBuilders.emplace_back(node);
 
@@ -675,5 +649,134 @@ namespace rapid
 		}
 
 		return 0;
+	}
+
+	void NodeEditor::generateSource() const
+	{
+		std::ofstream sourceFile("SampleSource.cpp");
+		if (sourceFile.is_open())
+		{
+			// Define classes.
+			for (const auto& node : m_ClassNodeBuilders)
+			{
+				sourceFile << "class " << node.getTitle() << " final" << std::endl;
+				sourceFile << "{" << std::endl;
+
+				int8_t oldProperty = -1;
+				// Write all the output attributes.
+				for (const auto& attribute : node.getOutputs())
+				{
+					if (attribute.m_AttributeName == "this") continue;
+
+					if (attribute.m_Property == -1)
+						sourceFile << "int m_" << attribute.m_AttributeName << ";" << std::endl;
+
+					else if (attribute.m_Property == 0 && oldProperty != 0)
+					{
+						sourceFile << "public:" << std::endl;
+						oldProperty = 0;
+					}
+					else if (attribute.m_Property == 1 && oldProperty != 1)
+					{
+						sourceFile << "private:" << std::endl;
+						oldProperty = 1;
+					}
+					else if (attribute.m_Property == 2 && oldProperty != 2)
+					{
+						sourceFile << "protected:" << std::endl;
+						oldProperty = 2;
+					}
+
+					sourceFile << "int m_" << attribute.m_AttributeName << ";" << std::endl;
+				}
+
+				sourceFile << "};" << std::endl << std::endl;
+			}
+
+			// Define structs.
+			for (const auto& node : m_StructNodeBuilders)
+			{
+				sourceFile << "struct " << node.getTitle() << " final" << std::endl;
+				sourceFile << "{" << std::endl;
+
+				int8_t oldProperty = -1;
+				// Write all the output attributes.
+				for (const auto& attribute : node.getOutputs())
+				{
+					if (attribute.m_AttributeName == "this") continue;
+
+					if (attribute.m_Property == -1)
+						sourceFile << "int m_" << attribute.m_AttributeName << ";" << std::endl;
+
+					else if (attribute.m_Property == 0 && oldProperty != 0)
+					{
+						sourceFile << "public:" << std::endl;
+						oldProperty = 0;
+					}
+					else if (attribute.m_Property == 1 && oldProperty != 1)
+					{
+						sourceFile << "private:" << std::endl;
+						oldProperty = 1;
+					}
+					else if (attribute.m_Property == 2 && oldProperty != 2)
+					{
+						sourceFile << "protected:" << std::endl;
+						oldProperty = 2;
+					}
+
+					sourceFile << "int m_" << attribute.m_AttributeName << ";" << std::endl;
+				}
+
+				sourceFile << "};" << std::endl << std::endl;
+			}
+
+			// Define functions.
+			for (const auto& node : m_NodeBuilders)
+			{
+				sourceFile << "decltype(auto) " << node.getTitle() << "(";
+
+				// Write all the input attributes.
+				const auto& inputs = node.getInputs();
+				for (uint32_t i = 0; i < inputs.size(); ++i)
+				{
+					const auto& attribute = inputs[i];
+					sourceFile << "int " << attribute.m_AttributeName;
+
+					if (i < (inputs.size() - 1))
+						sourceFile << ", ";
+				}
+
+				sourceFile << ")" << std::endl << "{" << std::endl;
+				sourceFile << "return std::make_tuple(";
+
+				// Write all the output attributes.
+				const auto& outputs = node.getOutputs();
+				for (uint32_t i = 0; i < outputs.size(); ++i)
+				{
+					const auto& attribute = outputs[i];
+					sourceFile << attribute.m_AttributeName;
+
+					if (i < (outputs.size() - 1))
+						sourceFile << ", ";
+				}
+
+				sourceFile << ");" << std::endl << "}" << std::endl << std::endl;
+			}
+
+			// Now we can link the two using the links.
+			for (const auto& link : m_Links)
+			{
+				// const auto& fromNode = m_ActiveNodeBuilders[link.first.first];
+				// const auto& toNode = m_ActiveNodeBuilders[link.second.first];
+
+				// The linking logic.
+			}
+		}
+
+		sourceFile.close();
+
+		std::ofstream jsonFile(m_Title + ".rof");
+		jsonFile << m_JsonDocument.dump(0);
+		jsonFile.close();
 	}
 }
